@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 const STAGES_DATA = [
   { name: 'Q1 Funnel', stages: [{ label: 'Visitors', val: 100, color: '#FFFFFF' }, { label: 'Leads', val: 62, color: '#E2E8F0' }, { label: 'Deals', val: 38, color: '#CBD5E1' }, { label: 'Won', val: 18, color: '#94A3B8' }] },
@@ -18,7 +19,7 @@ const hash = (x: number, y: number) => {
 export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const [periodIndex, setPeriodIndex] = useState(0);
   const period = STAGES_DATA[periodIndex];
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
 
   const targetDataRef = useRef(period.stages);
   const fromDataRef = useRef(period.stages);
@@ -32,38 +33,43 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
 
   useEffect(() => {
     let req: number;
+    // Throttle to 30fps — funnel bars are nearly static
+    let lastFrame = 0;
     let time = 0;
-    const draw = () => {
-      time += 0.02;
+    const draw = (now: number) => {
+      req = requestAnimationFrame(draw);
+      if (!isVisible.current) return;
+      if (now - lastFrame < 33) return; // ~30fps
+      lastFrame = now;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-      }
+      const { width: w, height: h } = rect.current;
+      if (w === 0 || h === 0) return;
+
+      time += reducedMotion ? 0 : 0.02;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ctx.save();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, w, h);
 
-      let prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 500);
+      const prog = reducedMotion ? 1 : Math.min(1, (performance.now() - morphStartTimeRef.current) / 500);
       const e = 1 - Math.pow(2, -10 * prog);
 
       const count = period.stages.length;
-      const w = rect.width;
-      const h = rect.height;
       const rowH = (h - (count - 1) * 6) / count;
-      const cell = Math.max(2, Math.round(rect.width / 200));
+      const cell = Math.max(2, Math.round(w / 200));
+      const t2 = time;
 
       for (let i = 0; i < count; i++) {
         const target = targetDataRef.current[i];
         const from = fromDataRef.current[i];
         const val = from.val + (target.val - from.val) * e;
-        
+
         const stageW = (val / 100) * w;
         const yTop = i * (rowH + 6);
 
@@ -81,7 +87,8 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
             const jy = by + cell / 2;
             const jit = hash(jx, jy);
 
-            const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
+            const waveRaw = reducedMotion ? 0 :
+              Math.sin(jx * 0.05 + t2) + Math.sin(jy * 0.05 + t2 * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
 
             const sz = cell * (0.35 + 0.35 * mod) * (0.8 + 0.4 * jit);
@@ -92,11 +99,10 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
     req = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(req);
-  }, [period]);
+  }, [period, reducedMotion]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">

@@ -97,7 +97,7 @@ npx shadcn add @amicro/presets
 | **Cascade Stagger** | Deploys cards vertically and staggered in a diagonal cascade | `npx @subhanhq/amicro@latest add card-cascade-stagger` |
 | **Scatter Desk Deal** | Scatters cards into an overlapping dealt hand layout on hover | `npx @subhanhq/amicro@latest add card-scatter-spread` |
 | **Wheel Radial Fan** | Fans cards outward in a radial semi-circle around center anchor | `npx @subhanhq/amicro@latest add card-wheel-fan` |
-| **Interactive Carousel** | 3D motion carousel with dot indicators and prev/next controls | `npx @subhanhq/amicro@latest add card-carousel` |
+| **Interactive Carousel** | An interactive arc-based 3D motion carousel featuring smooth dot indicators and dynamic prev/next controls, inspired by vivi | `npx @subhanhq/amicro@latest add card-carousel` |
 | **CoverFlow Carousel** | Premium 3D CoverFlow carousel displaying cards along perspective path | `npx @subhanhq/amicro@latest add card-cover-flow` |
 | **Time Machine Stack** | Apple-style perspective depth card stack with timeline scrubber | `npx @subhanhq/amicro@latest add card-time-machine` |
 

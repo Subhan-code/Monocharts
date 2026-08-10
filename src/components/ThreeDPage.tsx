@@ -131,7 +131,7 @@ export function ThreeDPage({ theme, showToast, triggerHaptic, onNavigateHome }: 
               </a>
             </div>
             <p className={`text-xs ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}>
-              Arc-based 3D motion carousel with dot indicators.
+              An interactive arc-based 3D motion carousel featuring smooth dot indicators and dynamic prev/next controls, inspired by vivi.
             </p>
           </div>
 

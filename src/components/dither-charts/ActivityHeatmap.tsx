@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform, useReducedMotion } from 'motion/react';
+import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { Activity } from 'lucide-react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 const PERIODS = [
   { name: 'Last 3 Months', weeks: 12 },
@@ -20,7 +21,7 @@ const hash = (x: number, y: number) => {
 function AnimatedNumber({ value }: { value: number }) {
   const prefersReducedMotion = useReducedMotion();
   const spring = useSpring(value, { stiffness: 190, damping: 27, mass: 0.7 });
-  const display = useTransform(spring, (current) => 
+  const display = useTransform(spring, (current) =>
     Math.round(current).toLocaleString('en-US')
   );
   useEffect(() => {
@@ -32,7 +33,7 @@ function AnimatedNumber({ value }: { value: number }) {
 
 export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const [periodIndex, setPeriodIndex] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
   const period = PERIODS[periodIndex];
 
   const { data, total } = useMemo(() => {
@@ -56,7 +57,7 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
   const fromDataRef = useRef(data);
   const morphStartTimeRef = useRef(0);
   const timeRef = useRef(0);
-  
+
   useEffect(() => {
     fromDataRef.current = targetDataRef.current;
     targetDataRef.current = data;
@@ -66,65 +67,68 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
   useEffect(() => {
     let req: number;
     const draw = () => {
-      timeRef.current += 0.02;
+      if (!isVisible.current) { req = requestAnimationFrame(draw); return; }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-      }
+      const { width: w, height: h } = rect.current;
+      if (w === 0 || h === 0) { req = requestAnimationFrame(draw); return; }
+
+      timeRef.current += reducedMotion ? 0 : 0.02;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ctx.save();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, w, h);
 
-      let prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 500);
+      const prog = reducedMotion ? 1 : Math.min(1, (performance.now() - morphStartTimeRef.current) / 500);
       const e = 1 - Math.pow(2, -10 * prog);
-      
+
       const weeks = Math.max(fromDataRef.current.length, targetDataRef.current.length);
       const cellSize = 10;
       const gap = 2.5;
       const totalW = weeks * (cellSize + gap) - gap;
       const totalH = 7 * (cellSize + gap) - gap;
-      
-      const startX = (rect.width - totalW) / 2;
-      const startY = (rect.height - totalH) / 2;
-      
-      const colors = ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.75)', '#FFFFFF'];
-      const cell = Math.max(2, Math.round(rect.width / 250));
 
-      for (let w = 0; w < weeks; w++) {
+      const startX = (w - totalW) / 2;
+      const startY = (h - totalH) / 2;
+
+      const colors = ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.75)', '#FFFFFF'];
+      const cell = Math.max(2, Math.round(w / 250));
+      const t2 = timeRef.current;
+
+      for (let wk = 0; wk < weeks; wk++) {
         for (let d = 0; d < 7; d++) {
-          const targetVal = targetDataRef.current[w]?.[d] || 0;
-          const fromVal = fromDataRef.current[w]?.[d] || 0;
+          const targetVal = targetDataRef.current[wk]?.[d] || 0;
+          const fromVal = fromDataRef.current[wk]?.[d] || 0;
           const val = fromVal + (targetVal - fromVal) * e;
-          
-          const x = startX + w * (cellSize + gap);
+
+          const x = startX + wk * (cellSize + gap);
           const y = startY + d * (cellSize + gap);
-          
+
           const colorIdx = Math.max(0, Math.min(4, Math.round(val)));
-          
+
           ctx.save();
           ctx.beginPath();
           ctx.rect(x, y, cellSize, cellSize);
           ctx.clip();
-          
+
           ctx.globalAlpha = 0.85;
           ctx.fillStyle = colors[colorIdx];
-          
+
           for (let tx = Math.floor(x); tx <= Math.ceil(x + cellSize); tx += cell) {
             for (let ty = Math.floor(y); ty <= Math.ceil(y + cellSize); ty += cell) {
               const jx = tx + cell / 2;
               const jy = ty + cell / 2;
               const jit = hash(jx, jy);
-              
-              const waveRaw = Math.sin(jx * 0.05 + timeRef.current) + Math.sin(jy * 0.05 + timeRef.current * 0.7);
+
+              const waveRaw = reducedMotion ? 0 :
+                Math.sin(jx * 0.05 + t2) + Math.sin(jy * 0.05 + t2 * 0.7);
               const mod = smoothstep(-1.5, 1.5, waveRaw);
-              
+
               const sz = cell * (0.4 + 0.4 * mod) * (0.8 + 0.4 * jit);
               ctx.fillRect(tx + (cell - sz)/2, ty + (cell - sz)/2, sz, sz);
             }
@@ -137,7 +141,7 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
     };
     req = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(req);
-  }, []);
+  }, [reducedMotion]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">

@@ -3,7 +3,7 @@
   "name": "card-carousel",
   "type": "registry:block",
   "title": "Interactive 3D Carousel",
-  "description": "An interactive arc-based 3D motion carousel with dot indicators. Inspiration by vivi (https://x.com/vivitseng_).",
+  "description": "An interactive arc-based 3D motion carousel featuring smooth dot indicators and dynamic prev/next controls, inspired by vivi.",
   "dependencies": ["motion", "lucide-react"],
   "files": [
     {

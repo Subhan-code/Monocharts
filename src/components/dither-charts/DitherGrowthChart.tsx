@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { Users, TrendingUp } from 'lucide-react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 const RANGES = [
   { name: '7D', days: 7 },
@@ -19,7 +20,7 @@ const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(
 function AnimatedNumber({ value }: { value: number }) {
   const prefersReducedMotion = useReducedMotion();
   const spring = useSpring(value, { stiffness: 190, damping: 27, mass: 0.7 });
-  const display = useTransform(spring, (current) => 
+  const display = useTransform(spring, (current) =>
     '+' + Math.round(current).toLocaleString('en-US')
   );
 
@@ -47,11 +48,11 @@ interface DitherGrowthChartProps {
 
 export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGrowthChartProps) {
   const [rangeIndex, setRangeIndex] = useState(2); // 30D default
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
   const wrapperRef = useRef<HTMLDivElement>(null);
-  
+
   const range = RANGES[rangeIndex];
-  
+
   const [scrubIndex, setScrubIndex] = useState<number | null>(null);
   const targetX = useSpring(0, { stiffness: 650, damping: 42, mass: 0.5 });
   const targetY = useSpring(0, { stiffness: 650, damping: 42, mass: 0.5 });
@@ -79,7 +80,7 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
   const requestRef = useRef<number>();
   const pointerPosRef = useRef({ x: -100, y: -100 });
   const pointerActiveRef = useRef(false);
-  
+
   const fromDataRef = useRef([...data]);
   const fromMaxRef = useRef(maxVal);
   const targetDataRef = useRef([...data]);
@@ -89,10 +90,10 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
   useEffect(() => {
     fromDataRef.current = targetDataRef.current.map((_, i) => targetDataRef.current[i]);
     fromMaxRef.current = targetMaxRef.current;
-    
+
     targetDataRef.current = [...data];
     targetMaxRef.current = maxVal;
-    
+
     if (fromDataRef.current.length !== targetDataRef.current.length) {
        const len = targetDataRef.current.length;
        const old = fromDataRef.current;
@@ -102,55 +103,55 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
          return old[oldIdx];
        });
     }
-    
+
     morphStartTimeRef.current = performance.now();
   }, [data, maxVal]);
 
   useEffect(() => {
     const draw = () => {
-      timeRef.current += 0.03;
+      if (!isVisible.current) {
+        requestRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        ctx.imageSmoothingEnabled = false;
+      const { width: w, height: h } = rect.current;
+      if (w === 0 || h === 0) {
+        requestRef.current = requestAnimationFrame(draw);
+        return;
       }
-      
+
+      timeRef.current += reducedMotion ? 0 : 0.03;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cell = Math.max(3, Math.round(w / 180));
+
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.scale(dpr, dpr);
-      
-      const w = rect.width;
-      const h = rect.height;
-      const cell = Math.max(3, Math.round(w / 180));
-      
+
       let prog = 0;
-      if (morphStartTimeRef.current > 0) {
+      if (reducedMotion) {
+        prog = 1;
+      } else if (morphStartTimeRef.current > 0) {
         prog = (performance.now() - morphStartTimeRef.current) / 460;
         if (prog > 1) prog = 1;
       } else {
         prog = 1;
       }
-      
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reducedMotion) {
-        prog = 1;
-        timeRef.current = 0;
-      }
-      
+
       const curMax = fromMaxRef.current + (targetMaxRef.current - fromMaxRef.current) * prog;
       const curData = targetDataRef.current.map((v, i) => fromDataRef.current[i] + (v - fromDataRef.current[i]) * prog);
-      
+
       const px = pointerPosRef.current.x;
       const py = pointerPosRef.current.y;
       const isActive = pointerActiveRef.current;
-      
+      const t2 = timeRef.current;
+
       for (let x = 0; x < w; x += cell) {
         const t = x / w;
         const exactIdx = t * (curData.length - 1);
@@ -158,75 +159,74 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
         const i1 = Math.min(i0 + 1, curData.length - 1);
         const frac = exactIdx - i0;
         const val = curData[i0] + (curData[i1] - curData[i0]) * frac;
-        
+
         const headroom = 0.16 * h;
         const plotH = h - headroom;
         const curveY = h - plotH * (val / curMax);
-        
+
         for (let y = h; y >= 0; y -= cell) {
           ctx.fillStyle = theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
           ctx.fillRect(x + 1, y + 1, cell - 1, cell - 1);
-          
+
           if (y < curveY) continue;
-          
+
           const dx = x - px;
           const dy = y - py;
           const dist = Math.sqrt(dx*dx + dy*dy);
-          
+
           let glow = 0;
           if (isActive && !reducedMotion) {
              const rad = h * 0.35;
              glow = 1 - smoothstep(0, rad, dist);
           }
-          
-          const shimmer = reducedMotion ? 0 : Math.sin(y * 0.1 - timeRef.current * 2) * 0.07;
-          
+
+          const shimmer = reducedMotion ? 0 : Math.sin(y * 0.1 - t2 * 2) * 0.07;
+
           ctx.fillStyle = '#FFFFFF';
           const sz = cell * (0.7 + shimmer + glow * 0.3);
           const alpha = 0.6 + glow * 0.4;
           ctx.globalAlpha = alpha;
-          
+
           const offset = (cell - sz) / 2;
           ctx.fillRect(x + offset, y + offset, sz, sz);
           ctx.globalAlpha = 1;
         }
       }
-      
+
       ctx.restore();
       requestRef.current = requestAnimationFrame(draw);
     };
-    
+
     requestRef.current = requestAnimationFrame(draw);
     return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
-  }, [theme]);
+  }, [theme, reducedMotion]);
 
   const handlePointer = (e: React.MouseEvent | React.PointerEvent) => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
-    const rect = wrapper.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
+    const r = wrapper.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+
     pointerPosRef.current = { x, y };
     pointerActiveRef.current = true;
-    
-    const w = rect.width;
-    const h = rect.height;
-    
+
+    const { width: w, height: h } = rect.current;
+
     const t = clamp(x / w, 0, 1);
     const idx = Math.round(t * (data.length - 1));
     setScrubIndex(idx);
-    
+
     const actualT = data.length > 1 ? idx / (data.length - 1) : 0.5;
     targetX.set(actualT * w);
-    
+
     const val = data[idx];
     const headroom = 0.16 * h;
     const plotH = h - headroom;
     const curveY = h - plotH * (val / maxVal);
     targetY.set(curveY);
   };
-  
+
   const handlePointerLeave = () => {
     pointerActiveRef.current = false;
     setScrubIndex(null);
@@ -304,9 +304,9 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
         {/* Y Axis Ticks */}
         <div className="relative w-7 h-[180px] shrink-0">
           {ticks.map((t, i) => (
-            <span 
-              key={i} 
-              className={`absolute right-0 text-[10px] font-mono ${theme === 'dark' ? 'text-neutral-500' : 'text-neutral-400'}`} 
+            <span
+              key={i}
+              className={`absolute right-0 text-[10px] font-mono ${theme === 'dark' ? 'text-neutral-500' : 'text-neutral-400'}`}
               style={{ top: `${(i / 3) * 82 + 8}%`, transform: 'translateY(-50%)' }}
             >
               {t}
@@ -316,7 +316,7 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
 
         {/* Chart Canvas Container */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <div 
+          <div
             ref={wrapperRef}
             className="relative h-[180px] touch-none cursor-crosshair overflow-hidden rounded-xl"
             onPointerMove={handlePointer}
@@ -329,15 +329,15 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
             {/* Interactive Scrubber Line & Tooltip */}
             {scrubIndex !== null && (
               <>
-                <motion.div 
+                <motion.div
                   className="absolute top-0 bottom-0 w-px bg-blue-500/80 pointer-events-none z-10"
                   style={{ left: xPos }}
                 />
-                <motion.div 
+                <motion.div
                   className="absolute w-3 h-3 -ml-[6px] -mt-[6px] rounded-full bg-blue-500 border-2 border-white shadow-lg pointer-events-none z-20"
                   style={{ left: xPos, top: yPos }}
                 />
-                <motion.div 
+                <motion.div
                   className={`absolute -translate-x-1/2 -translate-y-full mb-3 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xl border pointer-events-none z-30 ${
                     theme === 'dark' ? 'bg-[#131313] text-white border-white/20' : 'bg-black text-white border-black'
                   }`}

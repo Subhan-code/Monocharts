@@ -11,7 +11,8 @@ import { DeviceUsageChart } from './dither-charts/DeviceUsageChart';
 import { StorageUsageChart } from './dither-charts/StorageUsageChart';
 import { RevenueLineChart } from './dither-charts/RevenueLineChart';
 import { UptimeChart } from './dither-charts/UptimeChart';
-import { Box, Sparkles, ArrowRight, Layers } from 'lucide-react';
+import { InViewRender } from './InViewRender';
+import { Box, Sparkles, ArrowRight } from 'lucide-react';
 
 interface DitherChartsPageProps {
   theme: 'dark' | 'light';
@@ -32,7 +33,7 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
 
   return (
     <div className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-10 font-sans">
-      
+
       {/* Page Hero Header */}
       <div className="flex flex-col items-center text-center gap-4 max-w-2xl mx-auto">
         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase ${
@@ -51,8 +52,8 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
 
       {/* Banner: Link to 3D Page for 3D Dither Lab Book */}
       <div className={`w-full rounded-[24px] p-6 border flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl transition-all ${
-        theme === 'dark' 
-          ? 'bg-gradient-to-r from-[#181818] via-[#1c1c1f] to-[#181818] border-white/10' 
+        theme === 'dark'
+          ? 'bg-gradient-to-r from-[#181818] via-[#1c1c1f] to-[#181818] border-white/10'
           : 'bg-gradient-to-r from-neutral-50 via-white to-neutral-50 border-neutral-200'
       }`}>
         <div className="flex items-center gap-4 text-left">
@@ -122,27 +123,27 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
           >
             {(activeCategory === 'all' || activeCategory === 'donut') && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full mb-6">
-                <DitherDonutChart theme={theme} />
-                <ServerGauge theme={theme} />
-                <DeviceUsageChart theme={theme} />
+                <InViewRender><DitherDonutChart theme={theme} /></InViewRender>
+                <InViewRender><ServerGauge theme={theme} /></InViewRender>
+                <InViewRender><DeviceUsageChart theme={theme} /></InViewRender>
               </div>
             )}
 
             {(activeCategory === 'all' || activeCategory === 'growth') && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full mb-6">
-                <DitherGrowthChart theme={theme} />
-                <ActivityHeatmap theme={theme} />
-                <TrafficBubble theme={theme} />
-                <RevenueLineChart theme={theme} />
+                <InViewRender><DitherGrowthChart theme={theme} /></InViewRender>
+                <InViewRender><ActivityHeatmap theme={theme} /></InViewRender>
+                <InViewRender><TrafficBubble theme={theme} /></InViewRender>
+                <InViewRender><RevenueLineChart theme={theme} /></InViewRender>
               </div>
             )}
 
             {(activeCategory === 'all' || activeCategory === 'stacked') && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
-                <DitherStackedChart theme={theme} />
-                <DitherFunnelChart theme={theme} />
-                <StorageUsageChart theme={theme} />
-                <UptimeChart theme={theme} />
+                <InViewRender><DitherStackedChart theme={theme} /></InViewRender>
+                <InViewRender><DitherFunnelChart theme={theme} /></InViewRender>
+                <InViewRender><StorageUsageChart theme={theme} /></InViewRender>
+                <InViewRender><UptimeChart theme={theme} /></InViewRender>
               </div>
             )}
           </motion.div>

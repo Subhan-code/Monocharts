@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useSpring } from 'motion/react';
-import { HardDrive } from 'lucide-react';
+import { useSpring } from 'motion/react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 const STORAGE_VIEWS = [
   { name: 'Database', total: 500, used: 340, color: '#FFFFFF' },
@@ -21,40 +21,44 @@ const hash = (x: number, y: number) => {
 export function StorageUsageChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const [viewIndex, setViewIndex] = useState(0);
   const view = STORAGE_VIEWS[viewIndex];
-  
+
   const percentage = (view.used / view.total) * 100;
-  
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
   const widthSpring = useSpring(percentage, { stiffness: 150, damping: 20 });
-  
+
   useEffect(() => {
     widthSpring.set(percentage);
   }, [percentage, widthSpring]);
 
   useEffect(() => {
     let req: number;
+    // Throttle to 30fps for this nearly-static chart
+    let lastFrame = 0;
     let time = 0;
-    const draw = () => {
-      time += 0.02;
+    const draw = (now: number) => {
+      req = requestAnimationFrame(draw);
+      if (!isVisible.current) return;
+      if (now - lastFrame < 33) return; // ~30fps
+      lastFrame = now;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-      }
+
+      const { width: w, height: h } = rect.current;
+      if (w === 0 || h === 0) return;
+
+      time += reducedMotion ? 0 : 0.02;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ctx.save();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, w, h);
 
-      const w = rect.width;
-      const h = rect.height;
-      const r = h / 2;
       const fillW = (widthSpring.get() / 100) * w;
-      const cell = Math.max(2, Math.round(rect.width / 200));
+      const cell = Math.max(2, Math.round(w / 200));
 
       // Track
       ctx.beginPath();
@@ -67,33 +71,33 @@ export function StorageUsageChart({ theme = 'dark', compact = false }: { theme?:
         ctx.beginPath();
         ctx.rect(0, 0, fillW, h);
         ctx.clip();
-        
+
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = '#FFFFFF';
-        
+
         for (let tx = 0; tx <= Math.ceil(fillW); tx += cell) {
           for (let ty = 0; ty <= h; ty += cell) {
             const jx = tx + cell / 2;
             const jy = ty + cell / 2;
             const jit = hash(jx, jy);
-            
-            const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
+
+            const waveRaw = reducedMotion ? 0 :
+              Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
-            
+
             const sz = cell * (0.3 + 0.4 * mod) * (0.8 + 0.4 * jit);
             ctx.fillRect(tx + (cell - sz)/2, ty + (cell - sz)/2, sz, sz);
           }
         }
-        
+
         ctx.restore();
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
     req = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(req);
-  }, [view, widthSpring]);
+  }, [view, widthSpring, reducedMotion]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">

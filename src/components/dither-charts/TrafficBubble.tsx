@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { Globe } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 const SOURCES = [
   { name: 'Direct', data: [{ x: 50, y: 50, r: 35, color: '#FFFFFF', label: 'US' }, { x: 30, y: 20, r: 20, color: '#E2E8F0', label: 'UK' }, { x: 70, y: 80, r: 25, color: '#CBD5E1', label: 'CA' }] },
@@ -20,7 +19,7 @@ const hash = (x: number, y: number) => {
 export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const [sourceIndex, setSourceIndex] = useState(0);
   const source = SOURCES[sourceIndex];
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
 
   const targetBubblesRef = useRef(source.data);
   const fromBubblesRef = useRef(source.data);
@@ -36,71 +35,74 @@ export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'da
     let req: number;
     let time = 0;
     const draw = () => {
-      time += 0.01;
+      if (!isVisible.current) { req = requestAnimationFrame(draw); return; }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-      }
+
+      const { width: w, height: h } = rect.current;
+      if (w === 0 || h === 0) { req = requestAnimationFrame(draw); return; }
+
+      time += reducedMotion ? 0 : 0.01;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ctx.save();
       ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.clearRect(0, 0, w, h);
 
-      let prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 600);
+      const prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 600);
       const e = 1 - Math.pow(2, -10 * prog);
 
       for (let i = 0; i < Math.max(fromBubblesRef.current.length, targetBubblesRef.current.length); i++) {
         const target = targetBubblesRef.current[i] || targetBubblesRef.current[targetBubblesRef.current.length-1];
         const from = fromBubblesRef.current[i] || fromBubblesRef.current[fromBubblesRef.current.length-1];
-        
+
         const x = from.x + (target.x - from.x) * e;
         const y = from.y + (target.y - from.y) * e;
         const r = from.r + (target.r - from.r) * e;
-        
-        const floatX = Math.sin(time + i * 2) * 4;
-        const floatY = Math.cos(time + i * 3) * 4;
 
-        const finalX = (x / 100) * rect.width + floatX;
-        const finalY = (y / 100) * rect.height + floatY;
+        const floatX = reducedMotion ? 0 : Math.sin(time + i * 2) * 4;
+        const floatY = reducedMotion ? 0 : Math.cos(time + i * 3) * 4;
+
+        const finalX = (x / 100) * w + floatX;
+        const finalY = (y / 100) * h + floatY;
 
         ctx.save();
         ctx.beginPath();
         ctx.arc(finalX, finalY, r, 0, Math.PI * 2);
         ctx.clip();
-        
+
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = target.color;
-        
-        const cell = Math.max(2, Math.round(rect.width / 200));
-        
+
+        const cell = Math.max(2, Math.round(w / 200));
+
         for (let bx = Math.floor(finalX - r); bx <= Math.ceil(finalX + r); bx += cell) {
           for (let by = Math.floor(finalY - r); by <= Math.ceil(finalY + r); by += cell) {
             const jx = bx + cell / 2;
             const jy = by + cell / 2;
             const jit = hash(jx, jy);
-            
+
             const dx = jx - finalX;
             const dy = jy - finalY;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            
+
             if (dist > r + cell) continue;
-            
+
             const fullness = smoothstep(0, 1, 1 - dist / r);
-            const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
+            const waveRaw = reducedMotion ? 0 :
+              Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
-            
+
             const sz = cell * (0.3 + 0.4 * fullness + 0.3 * mod) * (0.8 + 0.4 * jit);
             ctx.fillRect(bx + (cell - sz)/2, by + (cell - sz)/2, sz, sz);
           }
         }
-        
+
         ctx.restore();
-        
+
         ctx.globalAlpha = 1;
         ctx.fillStyle = '#000000';
         ctx.font = '600 11px Inter, sans-serif';
@@ -114,7 +116,7 @@ export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'da
     };
     req = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(req);
-  }, []);
+  }, [reducedMotion]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">

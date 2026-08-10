@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { Users } from 'lucide-react';
+import { useCanvasSetup } from '../../hooks/useCanvasSetup';
 
 type Plan = { name: string; color: string; base: number };
 const PLANS: Plan[] = [
@@ -39,7 +40,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 function AnimatedNumber({ value }: { value: number }) {
   const prefersReducedMotion = useReducedMotion();
   const spring = useSpring(value, { stiffness: 190, damping: 27, mass: 0.7 });
-  const display = useTransform(spring, (current) => 
+  const display = useTransform(spring, (current) =>
     Math.round(current).toLocaleString('en-US')
   );
 
@@ -99,7 +100,9 @@ interface DitherDonutChartProps {
 export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonutChartProps) {
   const [periodIndex, setPeriodIndex] = useState(1); // Month
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Use shared perf hook — no getBoundingClientRect or matchMedia per frame
+  const { canvasRef, rect, isVisible, reducedMotion } = useCanvasSetup();
 
   const period = PERIODS[periodIndex];
 
@@ -121,7 +124,7 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
   const fromSharesRef = useRef<number[]>([]);
   const targetSharesRef = useRef<number[]>([]);
   const dispSharesRef = useRef<number[]>([]);
-  
+
   const hoverRef = useRef(hoverIndex);
   useEffect(() => { hoverRef.current = hoverIndex; }, [hoverIndex]);
 
@@ -139,74 +142,78 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
 
   useEffect(() => {
     const draw = () => {
-      timeRef.current += 0.02;
+      // Skip draw when not visible — saves CPU when off-screen or tab hidden
+      if (!isVisible.current) {
+        requestRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
+      // Use cached rect from ResizeObserver — no reflow
+      const { width: logW, height: logH } = rect.current;
+      if (logW === 0 || logH === 0) {
+        requestRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      timeRef.current += reducedMotion ? 0 : 0.02;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const logicalSize = 200;
-      const rect = canvas.getBoundingClientRect();
-      
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-      }
-      
+
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.scale((rect.width * dpr) / logicalSize, (rect.height * dpr) / logicalSize);
-      
+      ctx.scale((logW * dpr) / logicalSize, (logH * dpr) / logicalSize);
+
       let t = 0;
-      if (morphStartTimeRef.current > 0) {
+      if (reducedMotion) {
+        t = 1;
+      } else if (morphStartTimeRef.current > 0) {
         t = (performance.now() - morphStartTimeRef.current) / 500;
         if (t > 1) t = 1;
       } else {
         t = 1;
-      }
-      
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reducedMotion) {
-          t = 1; 
-          timeRef.current = 0;
       }
 
       const e = 1 - Math.pow(2, -10 * t);
       for (let i = 0; i < targetSharesRef.current.length; i++) {
         dispSharesRef.current[i] = fromSharesRef.current[i] + (targetSharesRef.current[i] - fromSharesRef.current[i]) * e;
       }
-      
+
       let startAngle = -Math.PI / 2;
       const gap = 0.07;
       const currentHover = hoverRef.current;
-      
+
       for (let i = 0; i < dispSharesRef.current.length; i++) {
         const share = dispSharesRef.current[i];
         if (share === 0) continue;
-        
+
         let sweep = share * Math.PI * 2;
         let aStart = startAngle + gap / 2;
         let aEnd = startAngle + sweep - gap / 2;
-        
+
         if (aEnd < aStart) aEnd = aStart;
-        
+
         ctx.save();
         const isHovered = currentHover === i;
         const isAnyHovered = currentHover !== null;
-        
+
         if (isHovered) {
           const mid = (aStart + aEnd) / 2;
           ctx.translate(Math.cos(mid) * 6, Math.sin(mid) * 6);
         }
-        
+
         ctx.beginPath();
         drawRoundedWedge(ctx, 100, 100, 55, 86, aStart, aEnd, 6);
         ctx.clip();
-        
+
         ctx.globalAlpha = isHovered ? 1.0 : (isAnyHovered ? 0.3 * 0.72 : 0.72);
         ctx.fillStyle = PLANS[i].color;
-        
+
         if (isHovered) {
             ctx.shadowColor = hexToRgba(PLANS[i].color, 0.55);
             ctx.shadowBlur = 5;
@@ -215,34 +222,36 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
         }
 
         const cell = 4.6;
+        const t2 = timeRef.current;
         for (let x = 14; x <= 186; x += cell) {
           for (let y = 14; y <= 186; y += cell) {
             const dx = x - 100;
             const dy = y - 100;
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist < 55 - cell || dist > 86 + cell) continue;
-            
+
             let a = Math.atan2(dy, dx);
             let normalizedA = a - aStart;
             while (normalizedA < 0) normalizedA += Math.PI * 2;
             while (normalizedA >= Math.PI * 2) normalizedA -= Math.PI * 2;
             if (normalizedA > (aEnd - aStart)) continue;
-            
+
             const fullness = smoothstep(0.62, 1.0, (dist - 55) / (86 - 55));
-            const waveRaw = Math.sin(dist * 0.1 - timeRef.current) + Math.sin(a * 3 + timeRef.current * 1.5) + Math.sin(dx * 0.05 + dy * 0.05 + timeRef.current * 2);
+            const waveRaw = reducedMotion ? 0 :
+              Math.sin(dist * 0.1 - t2) + Math.sin(a * 3 + t2 * 1.5) + Math.sin(dx * 0.05 + dy * 0.05 + t2 * 2);
             const wave = smoothstep(-1.5, 1.5, waveRaw);
             const jitter = hash(x, y);
-            
+
             const size = cell * ((isHovered ? 0.46 : 0.34) + 0.36 * fullness + 0.26 * wave) * (0.78 + 0.42 * jitter);
-            
+
             ctx.fillRect(x - size/2, y - size/2, size, size);
           }
         }
-        
+
         ctx.restore();
         startAngle += sweep;
       }
-      
+
       ctx.restore();
       requestRef.current = requestAnimationFrame(draw);
     };
@@ -251,7 +260,7 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, []);
+  }, [reducedMotion]);
 
   if (compact) {
     return (

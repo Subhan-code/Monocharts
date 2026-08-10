@@ -103,7 +103,7 @@ export const cardsData: CardConfig[] = [
     id: 'c11', 
     label: 'Interactive Carousel', 
     interactionType: 'card-carousel', 
-    description: 'An interactive arc-based 3D motion carousel with dot indicators and prev/next controls.',
+    description: 'An interactive arc-based 3D motion carousel featuring smooth dot indicators and dynamic prev/next controls, inspired by vivi.',
     inspiration: { name: 'vivi', url: 'https://x.com/vivitseng_' },
     cliCommand: 'npx @subhanhq/amicro@latest add card-carousel',
     category: 'carousels'
