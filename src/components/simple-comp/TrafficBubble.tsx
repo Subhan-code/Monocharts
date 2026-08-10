@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
+import { Globe } from 'lucide-react';
 
 const SOURCES = [
   { name: 'Direct', data: [{ x: 50, y: 50, r: 35, color: '#FFFFFF', label: 'US' }, { x: 30, y: 20, r: 20, color: '#E2E8F0', label: 'UK' }, { x: 70, y: 80, r: 25, color: '#CBD5E1', label: 'CA' }] },
@@ -15,32 +17,14 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [sourceIndex] = useState(0);
+export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [sourceIndex, setSourceIndex] = useState(0);
   const source = SOURCES[sourceIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(false);
-  const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const targetBubblesRef = useRef(source.data);
   const fromBubblesRef = useRef(source.data);
   const morphStartTimeRef = useRef(0);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    pointerRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      active: true,
-    };
-  }, []);
-
-  const handlePointerLeave = useCallback(() => {
-    pointerRef.current.active = false;
-  }, []);
 
   useEffect(() => {
     fromBubblesRef.current = targetBubblesRef.current;
@@ -49,38 +33,19 @@ export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark',
   }, [source]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const updateRect = () => {
-      const r = canvas.getBoundingClientRect();
-      rectRef.current = { width: r.width, height: r.height };
-    };
-    updateRect();
-
-    const ro = new ResizeObserver(updateRect);
-    ro.observe(canvas);
-
-    let req: number | null = null;
+    let req: number;
     let time = 0;
-    let currPx = -1000;
-    let currPy = -1000;
-
     const draw = () => {
-      if (!isInViewRef.current) return;
-      req = requestAnimationFrame(draw);
-
-      const rect = rectRef.current;
-      if (rect.width <= 0 || rect.height <= 0) return;
-
       time += 0.01;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
-
-      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
       }
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -88,15 +53,6 @@ export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark',
 
       let prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 600);
       const e = 1 - Math.pow(2, -10 * prog);
-
-      const targetP = pointerRef.current;
-      if (targetP.active) {
-        currPx += (targetP.x - currPx) * 0.25;
-        currPy += (targetP.y - currPy) * 0.25;
-      } else {
-        currPx += (-1000 - currPx) * 0.1;
-        currPy += (-1000 - currPy) * 0.1;
-      }
 
       for (let i = 0; i < Math.max(fromBubblesRef.current.length, targetBubblesRef.current.length); i++) {
         const target = targetBubblesRef.current[i] || targetBubblesRef.current[targetBubblesRef.current.length-1];
@@ -120,7 +76,7 @@ export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark',
         ctx.globalAlpha = 0.85;
         ctx.fillStyle = target.color;
         
-        const cell = 2;
+        const cell = Math.max(2, Math.round(rect.width / 200));
         
         for (let bx = Math.floor(finalX - r); bx <= Math.ceil(finalX + r); bx += cell) {
           for (let by = Math.floor(finalY - r); by <= Math.ceil(finalY + r); by += cell) {
@@ -134,19 +90,11 @@ export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark',
             
             if (dist > r + cell) continue;
             
-            const pdx = jx - currPx;
-            const pdy = jy - currPy;
-            const pdist = Math.hypot(pdx, pdy);
-            const ripple = Math.max(0, 1 - pdist / 35);
-
             const fullness = smoothstep(0, 1, 1 - dist / r);
             const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
             
-            let sz = cell * (0.3 + 0.4 * fullness + 0.3 * mod) * (0.8 + 0.4 * jit);
-            if (ripple > 0) {
-              sz = sz * (1 + ripple * 0.8);
-            }
+            const sz = cell * (0.3 + 0.4 * fullness + 0.3 * mod) * (0.8 + 0.4 * jit);
             ctx.fillRect(bx + (cell - sz)/2, by + (cell - sz)/2, sz, sz);
           }
         }
@@ -161,51 +109,18 @@ export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark',
         ctx.fillText(target.label, finalX, finalY);
       }
 
-      if (currPx > 0 && currPy > 0) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(currPx, currPy, 14, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-      }
-
       ctx.restore();
+      req = requestAnimationFrame(draw);
     };
-
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-      if (entry.isIntersecting) {
-        if (!req) req = requestAnimationFrame(draw);
-      } else {
-        if (req) {
-          cancelAnimationFrame(req);
-          req = null;
-        }
-      }
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    return () => {
-      if (req) cancelAnimationFrame(req);
-      ro.disconnect();
-      io.disconnect();
-    };
+    req = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(req);
   }, []);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">
-      <div className="relative w-full h-[140px] flex items-center justify-center touch-none">
-        <canvas 
-          ref={canvasRef} 
-          onPointerMove={handlePointerMove}
-          onPointerDown={handlePointerMove}
-          onPointerLeave={handlePointerLeave}
-          onPointerUp={handlePointerLeave}
-          className="absolute inset-0 w-full h-full cursor-crosshair" 
-        />
+      <div className="relative w-full h-[140px] flex items-center justify-center">
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
     </div>
   );
-});
+}

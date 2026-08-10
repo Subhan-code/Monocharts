@@ -815,7 +815,7 @@ export default function App() {
                   <div className={`hidden sm:flex items-center p-1 rounded-full border shadow-inner transition-colors duration-300 max-w-full overflow-x-visible ${theme === 'dark' ? 'bg-[#181818] border-white/5' : 'bg-neutral-200/50 border-neutral-300/30'}`}>
                     <div className="flex items-center gap-1.5 pr-1">
                       <button
-                        onClick={() => { setCatalogTab('buttons'); window.location.hash = '#/catalog?tab=buttons'; }}
+                        onClick={() => setCatalogTab('buttons')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
                           catalogTab === 'buttons' 
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 
@@ -825,7 +825,7 @@ export default function App() {
                         Buttons
                       </button>
                       <button
-                        onClick={() => { setCatalogTab('cards'); window.location.hash = '#/catalog?tab=cards'; }}
+                        onClick={() => setCatalogTab('cards')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
                           catalogTab === 'cards' 
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 
@@ -835,7 +835,7 @@ export default function App() {
                         Card Spreads
                       </button>
                       <button
-                        onClick={() => { setCatalogTab('carousels'); window.location.hash = '#/catalog?tab=carousels'; }}
+                        onClick={() => setCatalogTab('carousels')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
                           catalogTab === 'carousels' 
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 
@@ -845,7 +845,7 @@ export default function App() {
                         3D Carousels
                       </button>
                       <button
-                        onClick={() => { setCatalogTab('loaders'); window.location.hash = '#/catalog?tab=loaders'; }}
+                        onClick={() => setCatalogTab('loaders')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
                           catalogTab === 'loaders' 
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 
@@ -855,7 +855,7 @@ export default function App() {
                         Loaders
                       </button>
                       <button
-                        onClick={() => { setCatalogTab('dither-charts'); window.location.hash = '#/dither-charts'; }}
+                        onClick={() => setCatalogTab('dither-charts')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
                           catalogTab === 'dither-charts' || catalogTab === 'simple-comp'
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 

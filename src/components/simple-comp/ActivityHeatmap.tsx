@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { motion, AnimatePresence, useSpring, useTransform, useReducedMotion } from 'motion/react';
+import { Activity } from 'lucide-react';
 
 const PERIODS = [
   { name: 'Last 3 Months', weeks: 12 },
@@ -29,13 +30,9 @@ function AnimatedNumber({ value }: { value: number }) {
   return <motion.span className="tabular-nums">{display}</motion.span>;
 }
 
-export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [periodIndex] = useState(0);
+export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [periodIndex, setPeriodIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(false);
-  const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
-
   const period = PERIODS[periodIndex];
 
   const { data, total } = useMemo(() => {
@@ -53,28 +50,13 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
       newData.push(col);
     }
     return { data: newData, total: tot };
-  }, [periodIndex, period.weeks]);
+  }, [periodIndex]);
 
   const targetDataRef = useRef(data);
   const fromDataRef = useRef(data);
   const morphStartTimeRef = useRef(0);
   const timeRef = useRef(0);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    pointerRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      active: true,
-    };
-  }, []);
-
-  const handlePointerLeave = useCallback(() => {
-    pointerRef.current.active = false;
-  }, []);
-
+  
   useEffect(() => {
     fromDataRef.current = targetDataRef.current;
     targetDataRef.current = data;
@@ -82,37 +64,19 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
   }, [data]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const updateRect = () => {
-      const r = canvas.getBoundingClientRect();
-      rectRef.current = { width: r.width, height: r.height };
-    };
-    updateRect();
-
-    const ro = new ResizeObserver(updateRect);
-    ro.observe(canvas);
-
-    let req: number | null = null;
-    let currPx = -1000;
-    let currPy = -1000;
-
+    let req: number;
     const draw = () => {
-      if (!isInViewRef.current) return;
-      req = requestAnimationFrame(draw);
-
-      const rect = rectRef.current;
-      if (rect.width <= 0 || rect.height <= 0) return;
-
       timeRef.current += 0.02;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
-      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
       }
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -131,17 +95,7 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
       const startY = (rect.height - totalH) / 2;
       
       const colors = ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.75)', '#FFFFFF'];
-      const cell = 2;
-
-      // Pointer lerp
-      const targetP = pointerRef.current;
-      if (targetP.active) {
-        currPx += (targetP.x - currPx) * 0.25;
-        currPy += (targetP.y - currPy) * 0.25;
-      } else {
-        currPx += (-1000 - currPx) * 0.1;
-        currPy += (-1000 - currPy) * 0.1;
-      }
+      const cell = Math.max(2, Math.round(rect.width / 250));
 
       for (let w = 0; w < weeks; w++) {
         for (let d = 0; d < 7; d++) {
@@ -168,60 +122,21 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
               const jy = ty + cell / 2;
               const jit = hash(jx, jy);
               
-              const dx = jx - currPx;
-              const dy = jy - currPy;
-              const dist = Math.hypot(dx, dy);
-              const ripple = Math.max(0, 1 - dist / 40);
-
               const waveRaw = Math.sin(jx * 0.05 + timeRef.current) + Math.sin(jy * 0.05 + timeRef.current * 0.7);
               const mod = smoothstep(-1.5, 1.5, waveRaw);
               
-              let sz = cell * (0.4 + 0.4 * mod) * (0.8 + 0.4 * jit);
-              if (ripple > 0) {
-                sz = sz * (1 + ripple * 0.7);
-                ctx.fillStyle = '#FFFFFF';
-              } else {
-                ctx.fillStyle = colors[colorIdx];
-              }
-
+              const sz = cell * (0.4 + 0.4 * mod) * (0.8 + 0.4 * jit);
               ctx.fillRect(tx + (cell - sz)/2, ty + (cell - sz)/2, sz, sz);
             }
           }
           ctx.restore();
         }
       }
-
-      if (currPx > 0 && currPy > 0) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(currPx, currPy, 14, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-      }
-
       ctx.restore();
+      req = requestAnimationFrame(draw);
     };
-
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-      if (entry.isIntersecting) {
-        if (!req) req = requestAnimationFrame(draw);
-      } else {
-        if (req) {
-          cancelAnimationFrame(req);
-          req = null;
-        }
-      }
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    return () => {
-      if (req) cancelAnimationFrame(req);
-      ro.disconnect();
-      io.disconnect();
-    };
+    req = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(req);
   }, []);
 
   return (
@@ -234,17 +149,10 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
             </span>
           </div>
         )}
-        <div className="w-full flex justify-center touch-none">
-          <canvas 
-            ref={canvasRef} 
-            onPointerMove={handlePointerMove}
-            onPointerDown={handlePointerMove}
-            onPointerLeave={handlePointerLeave}
-            onPointerUp={handlePointerLeave}
-            className="w-full h-[120px] cursor-crosshair" 
-          />
+        <div className="w-full flex justify-center">
+          <canvas ref={canvasRef} className="w-full h-[120px]" />
         </div>
       </div>
     </div>
   );
-});
+}

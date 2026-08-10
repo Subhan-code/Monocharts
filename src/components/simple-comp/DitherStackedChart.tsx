@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { CreditCard, DollarSign } from 'lucide-react';
 
@@ -133,63 +133,24 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
   const hoverRef = useRef({ b: hoverBranch, band: hoverBand });
   useEffect(() => { hoverRef.current = { b: hoverBranch, band: hoverBand }; }, [hoverBranch, hoverBand]);
 
-  const handleCanvasPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-
-    const bCount = BRANCHES.length;
-    const slotW = rect.width / bCount;
-    const idx = Math.floor(x / slotW);
-
-    if (idx >= 0 && idx < bCount) {
-      setHoverBranch(idx);
-    } else {
-      setHoverBranch(null);
-    }
-  }, []);
-
-  const handleCanvasPointerLeave = useCallback(() => {
-    setHoverBranch(null);
-  }, []);
-
   useEffect(() => {
     fromStateRef.current = new Map(drawnRef.current);
     morphStartTimeRef.current = performance.now();
   }, [data]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    let isInView = true;
-    const io = new IntersectionObserver(([entry]) => {
-      isInView = entry.isIntersecting;
-      if (entry.isIntersecting) {
-        if (!requestRef.current) requestRef.current = requestAnimationFrame(draw);
-      } else {
-        if (requestRef.current) {
-          cancelAnimationFrame(requestRef.current);
-          requestRef.current = undefined;
-        }
-      }
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
     const draw = () => {
-      if (!isInView) return;
-      requestRef.current = requestAnimationFrame(draw);
       timeRef.current += 0.02;
-
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
       }
       
       ctx.save();
@@ -284,10 +245,7 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
     };
     
     requestRef.current = requestAnimationFrame(draw);
-    return () => { 
-      if (requestRef.current) cancelAnimationFrame(requestRef.current); 
-      io.disconnect();
-    };
+    return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
   }, [data, axisMax]);
 
   if (compact) {
@@ -359,15 +317,8 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
       </div>
 
       {/* Main Canvas Chart */}
-      <div className="relative h-[200px] w-full rounded-xl overflow-hidden touch-none">
-        <canvas 
-          ref={canvasRef} 
-          onPointerMove={handleCanvasPointerMove}
-          onPointerDown={handleCanvasPointerMove}
-          onPointerLeave={handleCanvasPointerLeave}
-          onPointerUp={handleCanvasPointerLeave}
-          className="w-full h-full block cursor-pointer" 
-        />
+      <div className="relative h-[200px] w-full rounded-xl overflow-hidden">
+        <canvas ref={canvasRef} className="w-full h-full block" />
       </div>
 
       {/* Branch Labels */}

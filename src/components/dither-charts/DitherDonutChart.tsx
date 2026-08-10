@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { Users } from 'lucide-react';
 
@@ -125,46 +125,6 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
   const hoverRef = useRef(hoverIndex);
   useEffect(() => { hoverRef.current = hoverIndex; }, [hoverIndex]);
 
-  const handleCanvasPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const dx = x - cx;
-    const dy = y - cy;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist < 20 || dist > rect.width / 2 + 10) {
-      setHoverIndex(null);
-      return;
-    }
-
-    let angle = Math.atan2(dy, dx);
-    if (angle < -Math.PI / 2) angle += Math.PI * 2;
-
-    let start = -Math.PI / 2;
-    const curShares = dispSharesRef.current;
-    let found: number | null = null;
-
-    for (let i = 0; i < curShares.length; i++) {
-      const sweep = curShares[i] * Math.PI * 2;
-      if (angle >= start && angle <= start + sweep) {
-        found = i;
-        break;
-      }
-      start += sweep;
-    }
-    setHoverIndex(found);
-  }, []);
-
-  const handleCanvasPointerLeave = useCallback(() => {
-    setHoverIndex(null);
-  }, []);
-
   useEffect(() => {
     if (dispSharesRef.current.length === 0) {
        dispSharesRef.current = [...shares];
@@ -178,38 +138,20 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
   }, [shares]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    let isInView = true;
-    const io = new IntersectionObserver(([entry]) => {
-      isInView = entry.isIntersecting;
-      if (entry.isIntersecting) {
-        if (!requestRef.current) requestRef.current = requestAnimationFrame(draw);
-      } else {
-        if (requestRef.current) {
-          cancelAnimationFrame(requestRef.current);
-          requestRef.current = undefined;
-        }
-      }
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
     const draw = () => {
-      if (!isInView) return;
-      requestRef.current = requestAnimationFrame(draw);
       timeRef.current += 0.02;
-
+      const canvas = canvasRef.current;
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const logicalSize = 200;
       const rect = canvas.getBoundingClientRect();
       
-      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
       }
       
       ctx.save();
@@ -308,7 +250,6 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
     requestRef.current = requestAnimationFrame(draw);
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      io.disconnect();
     };
   }, []);
 
@@ -363,15 +304,8 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
       {/* Main Content Layout */}
       <div className="flex flex-col sm:flex-row items-center gap-6">
         {/* Canvas Donut */}
-        <div className="relative w-[180px] h-[180px] shrink-0 touch-none">
-          <canvas 
-            ref={canvasRef} 
-            onPointerMove={handleCanvasPointerMove}
-            onPointerDown={handleCanvasPointerMove}
-            onPointerLeave={handleCanvasPointerLeave}
-            onPointerUp={handleCanvasPointerLeave}
-            className="w-full h-full block cursor-pointer" 
-          />
+        <div className="relative w-[180px] h-[180px] shrink-0">
+          <canvas ref={canvasRef} className="w-full h-full block" />
         </div>
 
         {/* Plan Breakdown List */}
