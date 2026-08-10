@@ -118,13 +118,20 @@ export function ThreeDPage({ theme, showToast, triggerHaptic, onNavigateHome }: 
         <div className={`rounded-[24px] p-6 border flex flex-col items-center justify-between gap-4 transition-all ${
           theme === 'dark' ? 'bg-[#181818] border-white/5 hover:bg-[#1e1e1e]' : 'bg-white border-neutral-100 hover:shadow-lg'
         }`}>
-          <div className="text-center">
-            <h3 className="text-sm font-semibold tracking-tight">Interactive 3D Carousel</h3>
-            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}>
+          <div className="text-center flex flex-col items-center gap-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold tracking-tight">Interactive 3D Carousel</h3>
+              <a 
+                href="https://x.com/vivitseng_" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors font-medium"
+              >
+                by vivi
+              </a>
+            </div>
+            <p className={`text-xs ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}>
               Arc-based 3D motion carousel with dot indicators.
-            </p>
-            <p className="text-[11px] mt-1 opacity-80">
-              Inspiration by <a href="https://x.com/vivitseng_" target="_blank" rel="noopener noreferrer" className="underline text-blue-400 hover:text-blue-300 font-medium">vivi</a>
             </p>
           </div>
 
