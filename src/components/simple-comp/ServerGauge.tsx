@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { Server } from 'lucide-react';
+import { useSpring } from 'motion/react';
 
 const METRICS = [
   { name: 'CPU Load', base: 65, color: '#FFFFFF' },
@@ -18,9 +17,12 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [metricIndex, setMetricIndex] = useState(0);
+export const ServerGauge = React.memo(function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [metricIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
+
   const metric = METRICS[metricIndex];
   
   const valSpring = useSpring(metric.base, { stiffness: 120, damping: 20 });
@@ -30,16 +32,37 @@ export function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark
   }, [metricIndex, valSpring, metric.base]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.05;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -94,9 +117,6 @@ export function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark
             
             if (dist < rIn - cell || dist > rOut + cell) continue;
             
-            let a = Math.atan2(dy, dx);
-            if (a < 0) a += Math.PI * 2;
-            
             const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
             
@@ -108,11 +128,15 @@ export function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark
       }
       
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
-  }, [metric, valSpring]);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
+  }, [valSpring]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">
@@ -121,4 +145,4 @@ export function ServerGauge({ theme = 'dark', compact = false }: { theme?: 'dark
       </div>
     </div>
   );
-}
+});

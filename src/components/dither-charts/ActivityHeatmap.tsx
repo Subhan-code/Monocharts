@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { Activity } from 'lucide-react';
+import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 
 const PERIODS = [
   { name: 'Last 3 Months', weeks: 12 },
@@ -30,9 +29,12 @@ function AnimatedNumber({ value }: { value: number }) {
   return <motion.span className="tabular-nums">{display}</motion.span>;
 }
 
-export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [periodIndex, setPeriodIndex] = useState(0);
+export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [periodIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
+
   const period = PERIODS[periodIndex];
 
   const { data, total } = useMemo(() => {
@@ -50,7 +52,7 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
       newData.push(col);
     }
     return { data: newData, total: tot };
-  }, [periodIndex]);
+  }, [periodIndex, period.weeks]);
 
   const targetDataRef = useRef(data);
   const fromDataRef = useRef(data);
@@ -64,16 +66,36 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
   }, [data]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       timeRef.current += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -133,10 +155,14 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
         }
       }
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, []);
 
   return (
@@ -155,4 +181,4 @@ export function ActivityHeatmap({ theme = 'dark', compact = false }: { theme?: '
       </div>
     </div>
   );
-}
+});

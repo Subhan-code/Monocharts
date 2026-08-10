@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { Smartphone } from 'lucide-react';
 
 const DEVICES = [
   { name: 'Today', data: [{ label: 'Mobile', val: 65, color: '#FFFFFF' }, { label: 'Desktop', val: 25, color: '#E2E8F0' }, { label: 'Tablet', val: 10, color: '#94A3B8' }] },
@@ -17,10 +15,12 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [periodIndex, setPeriodIndex] = useState(0);
+export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [periodIndex] = useState(0);
   const period = DEVICES[periodIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
 
   const targetDataRef = useRef(period.data);
   const fromDataRef = useRef(period.data);
@@ -33,16 +33,37 @@ export function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 
   }, [period]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -91,9 +112,6 @@ export function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 
             const dist = Math.sqrt(dx*dx + dy*dy);
             if (dist < rInner - cell || dist > r + cell) continue;
             
-            let a = Math.atan2(dy, dx);
-            if (a < 0) a += Math.PI * 2;
-            
             const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
             
@@ -107,10 +125,14 @@ export function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, [period]);
 
   return (
@@ -120,4 +142,4 @@ export function DeviceUsageChart({ theme = 'dark', compact = false }: { theme?: 
       </div>
     </div>
   );
-}
+});

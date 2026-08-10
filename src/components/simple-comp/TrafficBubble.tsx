@@ -1,6 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { Globe } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const SOURCES = [
   { name: 'Direct', data: [{ x: 50, y: 50, r: 35, color: '#FFFFFF', label: 'US' }, { x: 30, y: 20, r: 20, color: '#E2E8F0', label: 'UK' }, { x: 70, y: 80, r: 25, color: '#CBD5E1', label: 'CA' }] },
@@ -17,10 +15,12 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [sourceIndex, setSourceIndex] = useState(0);
+export const TrafficBubble = React.memo(function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [sourceIndex] = useState(0);
   const source = SOURCES[sourceIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
 
   const targetBubblesRef = useRef(source.data);
   const fromBubblesRef = useRef(source.data);
@@ -33,16 +33,37 @@ export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'da
   }, [source]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.01;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -110,10 +131,14 @@ export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'da
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, []);
 
   return (
@@ -123,4 +148,4 @@ export function TrafficBubble({ theme = 'dark', compact = false }: { theme?: 'da
       </div>
     </div>
   );
-}
+});

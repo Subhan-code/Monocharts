@@ -15,10 +15,12 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [periodIndex, setPeriodIndex] = useState(0);
+export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [periodIndex] = useState(0);
   const period = STAGES_DATA[periodIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
 
   const targetDataRef = useRef(period.stages);
   const fromDataRef = useRef(period.stages);
@@ -31,17 +33,37 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
   }, [period]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -92,10 +114,14 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, [period]);
 
   return (
@@ -105,4 +131,4 @@ export function DitherFunnelChart({ theme = 'dark', compact = false }: { theme?:
       </div>
     </div>
   );
-}
+});

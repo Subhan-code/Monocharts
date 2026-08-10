@@ -16,26 +16,43 @@ const UPTIME_DATA = Array.from({ length: 90 }, (_, i) => {
   return 1;
 });
 
-export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-
-      if (rect.width <= 0 || rect.height <= 0) {
-        req = requestAnimationFrame(draw);
-        return;
-      }
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
@@ -89,11 +106,14 @@ export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark
       }
 
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
     
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, []);
 
   return (
@@ -103,4 +123,4 @@ export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark
       </div>
     </div>
   );
-}
+});

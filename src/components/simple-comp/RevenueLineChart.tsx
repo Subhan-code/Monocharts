@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
-import { DollarSign } from 'lucide-react';
 
 const REVENUE_DATA = [
   { name: 'This Week', total: 12450, data: [1200, 1500, 1100, 1800, 2200, 2900, 1750] },
@@ -17,10 +15,12 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-export function RevenueLineChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
-  const [periodIndex, setPeriodIndex] = useState(0);
+export const RevenueLineChart = React.memo(function RevenueLineChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [periodIndex] = useState(0);
   const period = REVENUE_DATA[periodIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rectRef = useRef({ width: 0, height: 0 });
+  const isInViewRef = useRef(true);
 
   const targetDataRef = useRef(period.data);
   const fromDataRef = useRef(period.data);
@@ -33,16 +33,37 @@ export function RevenueLineChart({ theme = 'dark', compact = false }: { theme?: 
   }, [period]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateRect = () => {
+      const r = canvas.getBoundingClientRect();
+      rectRef.current = { width: r.width, height: r.height };
+    };
+    updateRect();
+
+    const ro = new ResizeObserver(updateRect);
+    ro.observe(canvas);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     let req: number;
     let time = 0;
     const draw = () => {
+      req = requestAnimationFrame(draw);
+      if (!isInViewRef.current) return;
+
+      const rect = rectRef.current;
+      if (rect.width <= 0 || rect.height <= 0) return;
+
       time += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -109,10 +130,14 @@ export function RevenueLineChart({ theme = 'dark', compact = false }: { theme?: 
       
       ctx.restore();
       ctx.restore();
-      req = requestAnimationFrame(draw);
     };
+
     req = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(req);
+    return () => {
+      cancelAnimationFrame(req);
+      ro.disconnect();
+      io.disconnect();
+    };
   }, [period]);
 
   return (
@@ -122,4 +147,4 @@ export function RevenueLineChart({ theme = 'dark', compact = false }: { theme?: 
       </div>
     </div>
   );
-}
+});
