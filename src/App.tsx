@@ -10,8 +10,9 @@ import { AnimatedButton } from './components/AnimatedButton';
 import { getComponentCode, ThemeToggleCode, getCardComponentCode } from './utils/codeGenerator';
 import { CliPage } from './components/CliPage';
 import { SkillsPage } from './components/SkillsPage';
-import { SimpleCompPage } from './components/SimpleCompPage';
-import { SimpleCompGrid } from './components/simple-comp/SimpleCompGrid';
+import { DitherChartsPage, SimpleCompPage } from './components/DitherChartsPage';
+import { DitherChartsGrid, SimpleCompGrid } from './components/dither-charts/DitherChartsGrid';
+import { ThreeDPage } from './components/ThreeDPage';
 import { useWebHaptics } from './hooks/useWebHaptics';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -38,8 +39,8 @@ import { CardTimeMachine } from './components/cards/CardTimeMachine';
 
 type LayoutMode = 'list' | 'grid' | 'matrix';
 type SortMode = 'default' | 'alphabetical';
-type PageMode = 'home' | 'cli' | 'skills' | 'simple-comp';
-type CatalogTabType = 'buttons' | 'cards' | 'carousels' | 'loaders' | 'simple-comp';
+type PageMode = 'home' | 'cli' | 'skills' | 'dither-charts' | '3d-page' | 'simple-comp';
+type CatalogTabType = 'buttons' | 'cards' | 'carousels' | 'loaders' | 'dither-charts' | 'simple-comp';
 
 interface SponsorSlot {
   id: number;
@@ -55,7 +56,8 @@ const tabLabels: Record<CatalogTabType, string> = {
   cards: 'Card Spreads',
   carousels: '3D Carousels',
   loaders: 'Loaders',
-  'simple-comp': 'Simple Comp',
+  'dither-charts': 'Dither Charts',
+  'simple-comp': 'Dither Charts',
 };
 
 function AnimatedNumber({ value }: { value: number | null }) {
@@ -142,8 +144,10 @@ export default function App() {
         setCurrentPage('cli');
       } else if (hash.startsWith('#/skills') || hash.startsWith('#skills')) {
         setCurrentPage('skills');
-      } else if (hash.startsWith('#/simple-comp') || hash.startsWith('#simple-comp')) {
-        setCurrentPage('simple-comp');
+      } else if (hash.startsWith('#/dither-charts') || hash.startsWith('#dither-charts') || hash.startsWith('#/simple-comp') || hash.startsWith('#simple-comp')) {
+        setCurrentPage('dither-charts');
+      } else if (hash.startsWith('#/3d') || hash.startsWith('#3d')) {
+        setCurrentPage('3d-page');
       } else {
         setCurrentPage('home');
       }
@@ -333,12 +337,14 @@ export default function App() {
       window.location.hash = '#cli';
     } else if (page === 'skills') {
       window.location.hash = '#skills';
-    } else if (page === 'simple-comp') {
-      window.location.hash = '#simple-comp';
+    } else if (page === 'dither-charts' || page === 'simple-comp') {
+      window.location.hash = '#dither-charts';
+    } else if (page === '3d-page') {
+      window.location.hash = '#3d';
     } else {
       window.location.hash = '';
     }
-    setCurrentPage(page);
+    setCurrentPage(page === 'simple-comp' ? 'dither-charts' : page);
     setMobileMenuOpen(false);
   };
 
@@ -396,14 +402,24 @@ export default function App() {
                 Skills
               </button>
               <button 
-                onClick={() => navigateTo('simple-comp')}
+                onClick={() => navigateTo('dither-charts')}
                 className={`inline-flex items-center justify-center h-[36px] px-[14px] rounded-full text-[13px] font-medium leading-[16px] cursor-pointer no-underline whitespace-nowrap transition-all duration-200 border-0 ${
-                  currentPage === 'simple-comp'
+                  currentPage === 'dither-charts' || currentPage === 'simple-comp'
                     ? (theme === 'dark' ? 'text-white bg-[rgba(255,255,255,0.08)]' : 'text-black bg-neutral-200/80 font-semibold')
                     : (theme === 'dark' ? 'text-[rgba(202,202,202,0.7)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]' : 'text-neutral-600 hover:text-black hover:bg-neutral-200/40')
                 }`}
               >
-                Simple Comp
+                Dither Charts
+              </button>
+              <button 
+                onClick={() => navigateTo('3d-page')}
+                className={`inline-flex items-center justify-center h-[36px] px-[14px] rounded-full text-[13px] font-medium leading-[16px] cursor-pointer no-underline whitespace-nowrap transition-all duration-200 border-0 ${
+                  currentPage === '3d-page'
+                    ? (theme === 'dark' ? 'text-white bg-[rgba(255,255,255,0.08)]' : 'text-black bg-neutral-200/80 font-semibold')
+                    : (theme === 'dark' ? 'text-[rgba(202,202,202,0.7)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]' : 'text-neutral-600 hover:text-black hover:bg-neutral-200/40')
+                }`}
+              >
+                3D Page
               </button>
             </nav>
           </div>
@@ -499,14 +515,24 @@ export default function App() {
                 Skills
               </button>
               <button 
-                onClick={() => navigateTo('simple-comp')}
+                onClick={() => navigateTo('dither-charts')}
                 className={`flex items-center justify-start h-[40px] px-4 rounded-xl text-[14px] font-semibold cursor-pointer border-0 text-left bg-transparent ${
-                  currentPage === 'simple-comp'
+                  currentPage === 'dither-charts' || currentPage === 'simple-comp'
                     ? (theme === 'dark' ? 'text-white bg-white/10' : 'text-black bg-neutral-100 font-bold')
                     : (theme === 'dark' ? 'text-neutral-400 hover:text-white' : 'text-neutral-600 hover:text-black')
                 }`}
               >
-                Simple Comp
+                Dither Charts
+              </button>
+              <button 
+                onClick={() => navigateTo('3d-page')}
+                className={`flex items-center justify-start h-[40px] px-4 rounded-xl text-[14px] font-semibold cursor-pointer border-0 text-left bg-transparent ${
+                  currentPage === '3d-page'
+                    ? (theme === 'dark' ? 'text-white bg-white/10' : 'text-black bg-neutral-100 font-bold')
+                    : (theme === 'dark' ? 'text-neutral-400 hover:text-white' : 'text-neutral-600 hover:text-black')
+                }`}
+              >
+                3D Page
               </button>
             </motion.div>
           )}
@@ -535,15 +561,25 @@ export default function App() {
           >
             <SkillsPage theme={theme} onNavigateHome={() => navigateTo('home')} />
           </motion.div>
-        ) : currentPage === 'simple-comp' ? (
+        ) : currentPage === 'dither-charts' || currentPage === 'simple-comp' ? (
           <motion.div
-            key="simple-comp-page"
+            key="dither-charts-page"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.25 }}
           >
-            <SimpleCompPage theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} />
+            <DitherChartsPage theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} onNavigate3D={() => navigateTo('3d-page')} />
+          </motion.div>
+        ) : currentPage === '3d-page' ? (
+          <motion.div
+            key="3d-page"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            <ThreeDPage theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} onNavigateHome={() => navigateTo('home')} />
           </motion.div>
         ) : (
           <motion.div
@@ -740,7 +776,7 @@ export default function App() {
                               { id: 'cards', label: 'Card Spreads' },
                               { id: 'carousels', label: '3D Carousels' },
                               { id: 'loaders', label: 'Loaders' },
-                              { id: 'simple-comp', label: 'Simple Comp' }
+                              { id: 'dither-charts', label: 'Dither Charts' }
                             ].map((tab) => (
                               <button
                                 key={tab.id}
@@ -819,14 +855,14 @@ export default function App() {
                         Loaders
                       </button>
                       <button
-                        onClick={() => setCatalogTab('simple-comp')}
+                        onClick={() => setCatalogTab('dither-charts')}
                         className={`flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer border-0 whitespace-nowrap ${
-                          catalogTab === 'simple-comp' 
+                          catalogTab === 'dither-charts' || catalogTab === 'simple-comp'
                             ? (theme === 'dark' ? 'bg-[#2a2a2a] text-white' : 'bg-white text-black shadow-sm') 
                             : `${theme === 'dark' ? 'text-[#767676] hover:text-white' : 'text-black opacity-70 hover:opacity-100'}`
                         }`}
                       >
-                        Simple Comp
+                        Dither Charts
                       </button>
 
                       {/* More Filters Dropdown */}
@@ -1116,8 +1152,8 @@ export default function App() {
                         );
                       })}
                     </div>
-                  ) : catalogTab === 'simple-comp' ? (
-                    <SimpleCompGrid theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} />
+                  ) : catalogTab === 'dither-charts' || catalogTab === 'simple-comp' ? (
+                    <DitherChartsGrid theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} />
                   ) : (
                     displayedCards.map((card) => (
                       <motion.div 

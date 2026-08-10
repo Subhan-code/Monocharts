@@ -1,4 +1,4 @@
-export interface SimpleCompItem {
+export interface DitherChartItem {
   id: string;
   label: string;
   kebabName: string;
@@ -8,7 +8,9 @@ export interface SimpleCompItem {
   codeSnippet: string;
 }
 
-export const simpleCompData: SimpleCompItem[] = [
+export type SimpleCompItem = DitherChartItem;
+
+export const ditherChartsData: DitherChartItem[] = [
   {
     id: 'dither-book',
     label: '3D Dither Lab Book',
@@ -118,3 +120,5 @@ export const simpleCompData: SimpleCompItem[] = [
     codeSnippet: `import { UptimeChart } from '@/components/ui/dither-uptime';\n\nexport default function Demo() {\n  return <UptimeChart theme="dark" />;\n}`
   }
 ];
+
+export const simpleCompData = ditherChartsData;

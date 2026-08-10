@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Copy, Check } from 'lucide-react';
 import { DitherBook } from './DitherBook';
@@ -13,19 +13,19 @@ import { DeviceUsageChart } from './DeviceUsageChart';
 import { StorageUsageChart } from './StorageUsageChart';
 import { RevenueLineChart } from './RevenueLineChart';
 import { UptimeChart } from './UptimeChart';
-import { simpleCompData, SimpleCompItem } from '../../data/simpleComp';
+import { ditherChartsData, DitherChartItem } from '../../data/ditherCharts';
 import { IconSwap, IconSwapItem } from '../IconSwap';
 
-interface SimpleCompGridProps {
+interface DitherChartsGridProps {
   theme: 'dark' | 'light';
   showToast?: (message: string) => void;
   triggerHaptic?: (type: 'success' | 'warning' | 'error' | 'light' | 'medium' | 'heavy') => void;
 }
 
-export function SimpleCompGrid({ theme, showToast, triggerHaptic }: SimpleCompGridProps) {
+export function DitherChartsGrid({ theme, showToast, triggerHaptic }: DitherChartsGridProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleCopyCode = (item: SimpleCompItem) => {
+  const handleCopyCode = useCallback((item: DitherChartItem) => {
     navigator.clipboard.writeText(item.codeSnippet)
       .then(() => {
         if (triggerHaptic) triggerHaptic('success');
@@ -37,15 +37,15 @@ export function SimpleCompGrid({ theme, showToast, triggerHaptic }: SimpleCompGr
         if (triggerHaptic) triggerHaptic('error');
         if (showToast) showToast('Failed to copy code.');
       });
-  };
+  }, [showToast, triggerHaptic]);
 
-  const bookItem = simpleCompData.find(i => i.id === 'dither-book') || simpleCompData[0];
-  const chartItems = simpleCompData.filter(i => i.id !== 'dither-book');
+  const bookItem = ditherChartsData.find(i => i.id === 'dither-book') || ditherChartsData[0];
+  const chartItems = ditherChartsData.filter(i => i.id !== 'dither-book');
 
   return (
     <div className="w-full flex flex-col gap-8 max-w-[1060px] mx-auto text-left font-sans">
       
-      {/* Hero Book Component Card */}
+      {/* Hero 3D Dither Lab Book Component Card */}
       <div className="w-full">
         <div className={`relative group rounded-[24px] flex flex-col items-center justify-center p-4 md:p-6 transition-all duration-300 border w-full overflow-hidden ${
           theme === 'dark' 
@@ -156,3 +156,5 @@ export function SimpleCompGrid({ theme, showToast, triggerHaptic }: SimpleCompGr
     </div>
   );
 }
+
+export const SimpleCompGrid = DitherChartsGrid;

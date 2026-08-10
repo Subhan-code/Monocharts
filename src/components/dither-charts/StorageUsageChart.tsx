@@ -1,4 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useSpring } from 'motion/react';
+import { HardDrive } from 'lucide-react';
+
+const STORAGE_VIEWS = [
+  { name: 'Database', total: 500, used: 340, color: '#FFFFFF' },
+  { name: 'Assets', total: 1000, used: 850, color: '#E2E8F0' },
+  { name: 'Backups', total: 2000, used: 450, color: '#CBD5E1' },
+];
 
 const smoothstep = (min: number, max: number, value: number) => {
   const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
@@ -10,14 +18,18 @@ const hash = (x: number, y: number) => {
   return h - Math.floor(h);
 };
 
-const UPTIME_DATA = Array.from({ length: 90 }, (_, i) => {
-  if (i === 12 || i === 45 || i === 78) return 0.8;
-  if (i === 22 || i === 60) return 0;
-  return 1;
-});
-
-export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+export function StorageUsageChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
+  const [viewIndex, setViewIndex] = useState(0);
+  const view = STORAGE_VIEWS[viewIndex];
+  
+  const percentage = (view.used / view.total) * 100;
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const widthSpring = useSpring(percentage, { stiffness: 150, damping: 20 });
+  
+  useEffect(() => {
+    widthSpring.set(percentage);
+  }, [percentage, widthSpring]);
 
   useEffect(() => {
     let req: number;
@@ -28,52 +40,39 @@ export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
-
-      if (rect.width <= 0 || rect.height <= 0) {
-        req = requestAnimationFrame(draw);
-        return;
-      }
-      
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
       }
-      
       ctx.save();
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, rect.width, rect.height);
-      
-      const w = rect.width;
-      const days = UPTIME_DATA.length;
-      
-      const barW = 6;
-      const gap = 2;
-      const perRow = Math.max(1, Math.floor(w / (barW + gap)));
-      const cell = 2;
 
-      for (let i = 0; i < days; i++) {
-        const row = Math.floor(i / perRow);
-        const col = i % perRow;
-        
-        const x = col * (barW + gap);
-        const y = row * (26 + gap);
-        
-        const val = UPTIME_DATA[i];
-        const color = val === 1 ? '#FFFFFF' : val === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.6)';
-        
+      const w = rect.width;
+      const h = rect.height;
+      const r = h / 2;
+      const fillW = (widthSpring.get() / 100) * w;
+      const cell = Math.max(2, Math.round(rect.width / 200));
+
+      // Track
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.fill();
+
+      if (fillW > 0) {
         ctx.save();
         ctx.beginPath();
-        ctx.rect(x, y, barW, 26);
+        ctx.rect(0, 0, fillW, h);
         ctx.clip();
         
         ctx.globalAlpha = 0.85;
-        ctx.fillStyle = color;
+        ctx.fillStyle = '#FFFFFF';
         
-        for (let tx = x; tx <= x + barW; tx += cell) {
-          for (let ty = y; ty <= y + 26; ty += cell) {
+        for (let tx = 0; tx <= Math.ceil(fillW); tx += cell) {
+          for (let ty = 0; ty <= h; ty += cell) {
             const jx = tx + cell / 2;
             const jy = ty + cell / 2;
             const jit = hash(jx, jy);
@@ -85,20 +84,20 @@ export function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark
             ctx.fillRect(tx + (cell - sz)/2, ty + (cell - sz)/2, sz, sz);
           }
         }
+        
         ctx.restore();
       }
 
       ctx.restore();
       req = requestAnimationFrame(draw);
     };
-    
     req = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(req);
-  }, []);
+  }, [view, widthSpring]);
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">
-      <div className="relative w-full h-[60px] flex items-center justify-center px-2">
+      <div className="relative w-full h-[32px] flex items-center justify-center px-4">
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
     </div>
