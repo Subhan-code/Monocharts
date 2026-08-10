@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Copy, Check } from 'lucide-react';
-import { DitherBook } from './DitherBook';
 import { DitherDonutChart } from './DitherDonutChart';
 import { DitherGrowthChart } from './DitherGrowthChart';
 import { DitherStackedChart } from './DitherStackedChart';
@@ -39,60 +38,12 @@ export function DitherChartsGrid({ theme, showToast, triggerHaptic }: DitherChar
       });
   }, [showToast, triggerHaptic]);
 
-  const bookItem = ditherChartsData.find(i => i.id === 'dither-book') || ditherChartsData[0];
-  const chartItems = ditherChartsData.filter(i => i.id !== 'dither-book');
-
   return (
     <div className="w-full flex flex-col gap-8 max-w-[1060px] mx-auto text-left font-sans">
       
-      {/* Hero 3D Dither Lab Book Component Card */}
-      <div className="w-full">
-        <div className={`relative group rounded-[24px] flex flex-col items-center justify-center p-4 md:p-6 transition-all duration-300 border w-full overflow-hidden ${
-          theme === 'dark' 
-            ? 'bg-[#181818] border-white/5 hover:bg-[#1f1f1f] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]' 
-            : 'bg-white border-neutral-100 hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
-        }`}>
-          {/* Inner Stage Area */}
-          <div className="flex-1 flex items-center justify-center w-full min-h-[260px] md:min-h-[300px]">
-            <DitherBook theme={theme} />
-          </div>
-
-          {/* Details Row */}
-          <div className="w-full flex items-center justify-between mt-3 px-2">
-            <span className={`text-[13px] font-semibold transition-colors ${
-              theme === 'dark' ? 'text-neutral-300' : 'text-neutral-700'
-            }`}>
-              {bookItem.label}
-            </span>
-
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => handleCopyCode(bookItem)}
-              className={`p-2 rounded-xl transition-all cursor-pointer border flex items-center justify-center ${
-                copiedId === bookItem.id
-                  ? (theme === 'dark' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-100 text-emerald-600 border-emerald-300')
-                  : (theme === 'dark' ? 'bg-white/[0.08] border-transparent hover:bg-white/[0.14] text-neutral-300 hover:text-white' : 'bg-neutral-100 border-transparent hover:bg-neutral-200 text-neutral-650 hover:text-black')
-              }`}
-              title="Copy component code"
-            >
-              <IconSwap>
-                <IconSwapItem key={copiedId === bookItem.id ? "check" : "copy"}>
-                  {copiedId === bookItem.id ? (
-                    <Check className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </IconSwapItem>
-              </IconSwap>
-            </motion.button>
-          </div>
-        </div>
-      </div>
-
       {/* Grid of Compact Dither Components */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
-        {chartItems.map((item) => {
+        {ditherChartsData.map((item) => {
           const isCopied = copiedId === item.id;
 
           return (

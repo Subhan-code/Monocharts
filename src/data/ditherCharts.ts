@@ -12,15 +12,6 @@ export type SimpleCompItem = DitherChartItem;
 
 export const ditherChartsData: DitherChartItem[] = [
   {
-    id: 'dither-book',
-    label: '3D Dither Lab Book',
-    kebabName: 'dither-book',
-    category: 'book',
-    description: '3D page-flipping book with cream texture overlay & crease depth control.',
-    cliCommand: 'npx @subhanhq/amicro@latest add dither-book',
-    codeSnippet: `import { DitherBook } from '@/components/ui/dither-book';\n\nexport default function Demo() {\n  return <DitherBook theme="dark" />;\n}`
-  },
-  {
     id: 'dither-donut',
     label: 'Dither Donut Chart',
     kebabName: 'dither-donut',
