@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, animate } from 'motion/react';
 import { 
   LayoutGrid, List, LayoutTemplate, ArrowDownAZ, Copy, Sun, Moon, Github, 
@@ -62,19 +62,22 @@ const tabLabels: Record<CatalogTabType, string> = {
 
 function AnimatedNumber({ value }: { value: number | null }) {
   const [displayValue, setDisplayValue] = useState(0);
+  const prevValueRef = useRef(0);
 
   useEffect(() => {
     if (value === null) return;
-    const controls = animate(0, value, {
+    const startVal = prevValueRef.current;
+    const controls = animate(startVal, value, {
       duration: 1.2,
       ease: [0.16, 1, 0.3, 1], // easeOutExpo
       onUpdate: (latest) => setDisplayValue(Math.round(latest)),
+      onComplete: () => { prevValueRef.current = value; }
     });
     return () => controls.stop();
   }, [value]);
 
   if (value === null) return null;
-  return <>{displayValue}</>;
+  return <>{displayValue.toLocaleString('en-US')}</>;
 }
 
 export default function App() {
@@ -82,7 +85,7 @@ export default function App() {
   const [sortBy, setSortBy] = useState<SortMode>('default');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [stars, setStars] = useState<number>(124);
+  const [stars, setStars] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<PageMode>('home');
   const [catalogTab, setCatalogTab] = useState<CatalogTabType>('buttons');
   const [copiedText, setCopiedText] = useState<string | null>(null);
@@ -160,13 +163,32 @@ export default function App() {
 
   useEffect(() => {
     fetch('https://api.github.com/repos/Subhan-code/Amicro--Micro-transitions-')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        if (data.stargazers_count !== undefined) {
+        if (typeof data.stargazers_count === 'number') {
           setStars(data.stargazers_count);
+        } else {
+          throw new Error('Invalid stargazers_count');
         }
       })
-      .catch(err => console.error('Error fetching stars:', err));
+      .catch(() => {
+        // Fallback fetch if GitHub API rate-limits unauthenticated client requests
+        fetch('https://img.shields.io/github/stars/Subhan-code/Amicro--Micro-transitions-.json')
+          .then(res => res.json())
+          .then(data => {
+            if (data.value) {
+              const raw = String(data.value).replace(/k/i, '00').replace(/\./g, '');
+              const parsed = parseInt(raw, 10);
+              if (!isNaN(parsed) && parsed > 0) {
+                setStars(parsed);
+              }
+            }
+          })
+          .catch(err => console.error('Error fetching fallback stars:', err));
+      });
   }, []);
 
   const showToast = useCallback((message: string) => {
