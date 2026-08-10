@@ -15,11 +15,22 @@ export type CardInteractionType =
   | 'card-cover-flow-mono'
   | 'card-time-machine-mono';
 
+export interface CardMetadata {
+  id: string;
+  label: string;
+  interactionType: CardInteractionType;
+  description: string;
+  inspiration?: { name: string; url: string };
+  cliCommand?: string;
+  category?: 'spreads' | 'carousels';
+}
+
 export interface CardConfig {
   id: string;
   label: string;
   interactionType: CardInteractionType;
   description: string;
+  inspiration?: { name: string; url: string };
   cliCommand: string;
   category?: 'spreads' | 'carousels';
 }
@@ -93,6 +104,7 @@ export const cardsData: CardConfig[] = [
     label: 'Interactive Carousel', 
     interactionType: 'card-carousel', 
     description: 'An interactive arc-based 3D motion carousel with dot indicators and prev/next controls.',
+    inspiration: { name: 'vivi', url: 'https://x.com/vivitseng_' },
     cliCommand: 'npx @subhanhq/amicro@latest add card-carousel',
     category: 'carousels'
   },
@@ -117,6 +129,7 @@ export const cardsData: CardConfig[] = [
     label: 'Interactive Carousel (Monochrome)', 
     interactionType: 'card-carousel-mono', 
     description: 'An interactive arc-based 3D motion carousel rendering clean monochrome cards.',
+    inspiration: { name: 'vivi', url: 'https://x.com/vivitseng_' },
     cliCommand: 'npx @subhanhq/amicro@latest add card-carousel-mono',
     category: 'spreads'
   },

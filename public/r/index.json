@@ -1,0 +1,44 @@
+[
+  {
+    "name": "card-carousel",
+    "type": "registry:block",
+    "title": "Interactive 3D Carousel",
+    "description": "An interactive arc-based 3D motion carousel with dot indicators and prev/next controls.",
+    "dependencies": ["motion", "lucide-react"]
+  },
+  {
+    "name": "card-cover-flow",
+    "type": "registry:block",
+    "title": "CoverFlow Carousel",
+    "description": "A premium 3D CoverFlow carousel displaying cards along a perspective path.",
+    "dependencies": ["motion", "lucide-react"]
+  },
+  {
+    "name": "dither-donut-chart",
+    "type": "registry:block",
+    "title": "Dither Donut Chart",
+    "description": "Interactive pixelated dither donut chart with real-time spring physics.",
+    "dependencies": ["motion", "lucide-react"]
+  },
+  {
+    "name": "dither-growth-chart",
+    "type": "registry:block",
+    "title": "Dither Growth Chart",
+    "description": "60fps canvas growth line chart with pixel dither fill matrix.",
+    "dependencies": ["motion", "lucide-react"]
+  },
+  {
+    "name": "uptime-chart",
+    "type": "registry:block",
+    "title": "Uptime Dither Bar Chart",
+    "description": "Continuous uptime bar chart with dithered matrix animation.",
+    "dependencies": ["motion", "lucide-react"]
+  },
+  {
+    "name": "activity-heatmap",
+    "type": "registry:block",
+    "title": "Activity Dither Heatmap",
+    "description": "GitHub-style activity heatmap with interactive dither dots.",
+    "dependencies": ["motion", "lucide-react"]
+  }
+]

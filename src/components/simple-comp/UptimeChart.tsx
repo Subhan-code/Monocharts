@@ -19,7 +19,7 @@ const UPTIME_DATA = Array.from({ length: 90 }, (_, i) => {
 export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', compact = false }: { theme?: 'dark' | 'light'; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(true);
+  const isInViewRef = useRef(false);
   const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -52,19 +52,14 @@ export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', com
     const ro = new ResizeObserver(updateRect);
     ro.observe(canvas);
 
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    let req: number;
+    let req: number | null = null;
     let time = 0;
     let currPx = -1000;
     let currPy = -1000;
 
     const draw = () => {
-      req = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
+      req = requestAnimationFrame(draw);
 
       const rect = rectRef.current;
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -73,11 +68,11 @@ export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', com
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
       }
       
       ctx.save();
@@ -148,7 +143,6 @@ export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', com
         ctx.restore();
       }
 
-      // Pointer touch glow ring
       if (currPx > 0 && currPy > 0) {
         ctx.save();
         ctx.beginPath();
@@ -161,10 +155,22 @@ export const UptimeChart = React.memo(function UptimeChart({ theme = 'dark', com
 
       ctx.restore();
     };
-    
-    req = requestAnimationFrame(draw);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!req) req = requestAnimationFrame(draw);
+      } else {
+        if (req) {
+          cancelAnimationFrame(req);
+          req = null;
+        }
+      }
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     return () => {
-      cancelAnimationFrame(req);
+      if (req) cancelAnimationFrame(req);
       ro.disconnect();
       io.disconnect();
     };

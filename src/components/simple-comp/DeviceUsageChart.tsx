@@ -20,7 +20,7 @@ export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = '
   const period = DEVICES[periodIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(true);
+  const isInViewRef = useRef(false);
   const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const targetDataRef = useRef(period.data);
@@ -61,19 +61,14 @@ export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = '
     const ro = new ResizeObserver(updateRect);
     ro.observe(canvas);
 
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    let req: number;
+    let req: number | null = null;
     let time = 0;
     let currPx = -1000;
     let currPy = -1000;
 
     const draw = () => {
-      req = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
+      req = requestAnimationFrame(draw);
 
       const rect = rectRef.current;
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -82,10 +77,10 @@ export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = '
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
       }
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -107,7 +102,7 @@ export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = '
       const cy = rect.height / 2;
       const r = Math.min(cx, cy) * 0.85;
       const rInner = r * 0.65;
-      const cell = Math.max(2, Math.round(rect.width / 200));
+      const cell = 2;
       
       let startAngle = -Math.PI / 2;
 
@@ -173,9 +168,21 @@ export const DeviceUsageChart = React.memo(function DeviceUsageChart({ theme = '
       ctx.restore();
     };
 
-    req = requestAnimationFrame(draw);
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!req) req = requestAnimationFrame(draw);
+      } else {
+        if (req) {
+          cancelAnimationFrame(req);
+          req = null;
+        }
+      }
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     return () => {
-      cancelAnimationFrame(req);
+      if (req) cancelAnimationFrame(req);
       ro.disconnect();
       io.disconnect();
     };

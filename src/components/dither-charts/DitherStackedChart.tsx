@@ -160,18 +160,36 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
   }, [data]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let isInView = true;
+    const io = new IntersectionObserver(([entry]) => {
+      isInView = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!requestRef.current) requestRef.current = requestAnimationFrame(draw);
+      } else {
+        if (requestRef.current) {
+          cancelAnimationFrame(requestRef.current);
+          requestRef.current = undefined;
+        }
+      }
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     const draw = () => {
+      if (!isInView) return;
+      requestRef.current = requestAnimationFrame(draw);
       timeRef.current += 0.02;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       const rect = canvas.getBoundingClientRect();
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
       }
       
       ctx.save();
@@ -266,7 +284,10 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
     };
     
     requestRef.current = requestAnimationFrame(draw);
-    return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
+    return () => { 
+      if (requestRef.current) cancelAnimationFrame(requestRef.current); 
+      io.disconnect();
+    };
   }, [data, axisMax]);
 
   if (compact) {

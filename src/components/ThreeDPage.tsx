@@ -123,6 +123,9 @@ export function ThreeDPage({ theme, showToast, triggerHaptic, onNavigateHome }: 
             <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}>
               Arc-based 3D motion carousel with dot indicators.
             </p>
+            <p className="text-[11px] mt-1 opacity-80">
+              Inspiration by <a href="https://x.com/vivitseng_" target="_blank" rel="noopener noreferrer" className="underline text-blue-400 hover:text-blue-300 font-medium">vivi</a>
+            </p>
           </div>
 
           <div className="w-full h-[220px] flex items-center justify-center overflow-hidden rounded-xl">

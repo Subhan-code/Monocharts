@@ -20,7 +20,7 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
   const period = STAGES_DATA[periodIndex];
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(true);
+  const isInViewRef = useRef(false);
   const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const targetDataRef = useRef(period.stages);
@@ -61,19 +61,14 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
     const ro = new ResizeObserver(updateRect);
     ro.observe(canvas);
 
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    let req: number;
+    let req: number | null = null;
     let time = 0;
     let currPx = -1000;
     let currPy = -1000;
 
     const draw = () => {
-      req = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
+      req = requestAnimationFrame(draw);
 
       const rect = rectRef.current;
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -82,10 +77,10 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
       }
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -107,7 +102,7 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
       const w = rect.width;
       const h = rect.height;
       const rowH = (h - (count - 1) * 6) / count;
-      const cell = Math.max(2, Math.round(rect.width / 200));
+      const cell = 2;
 
       for (let i = 0; i < count; i++) {
         const target = targetDataRef.current[i];
@@ -162,9 +157,21 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
       ctx.restore();
     };
 
-    req = requestAnimationFrame(draw);
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!req) req = requestAnimationFrame(draw);
+      } else {
+        if (req) {
+          cancelAnimationFrame(req);
+          req = null;
+        }
+      }
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     return () => {
-      cancelAnimationFrame(req);
+      if (req) cancelAnimationFrame(req);
       ro.disconnect();
       io.disconnect();
     };

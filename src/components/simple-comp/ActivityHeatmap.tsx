@@ -33,7 +33,7 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
   const [periodIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rectRef = useRef({ width: 0, height: 0 });
-  const isInViewRef = useRef(true);
+  const isInViewRef = useRef(false);
   const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const period = PERIODS[periodIndex];
@@ -94,18 +94,13 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
     const ro = new ResizeObserver(updateRect);
     ro.observe(canvas);
 
-    const io = new IntersectionObserver(([entry]) => {
-      isInViewRef.current = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    io.observe(canvas);
-
-    let req: number;
+    let req: number | null = null;
     let currPx = -1000;
     let currPy = -1000;
 
     const draw = () => {
-      req = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
+      req = requestAnimationFrame(draw);
 
       const rect = rectRef.current;
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -114,10 +109,10 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
       }
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -136,9 +131,9 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
       const startY = (rect.height - totalH) / 2;
       
       const colors = ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.75)', '#FFFFFF'];
-      const cell = Math.max(2, Math.round(rect.width / 250));
+      const cell = 2;
 
-      // Smooth pointer lerp
+      // Pointer lerp
       const targetP = pointerRef.current;
       if (targetP.active) {
         currPx += (targetP.x - currPx) * 0.25;
@@ -209,9 +204,21 @@ export const ActivityHeatmap = React.memo(function ActivityHeatmap({ theme = 'da
       ctx.restore();
     };
 
-    req = requestAnimationFrame(draw);
+    const io = new IntersectionObserver(([entry]) => {
+      isInViewRef.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!req) req = requestAnimationFrame(draw);
+      } else {
+        if (req) {
+          cancelAnimationFrame(req);
+          req = null;
+        }
+      }
+    }, { threshold: 0.05 });
+    io.observe(canvas);
+
     return () => {
-      cancelAnimationFrame(req);
+      if (req) cancelAnimationFrame(req);
       ro.disconnect();
       io.disconnect();
     };

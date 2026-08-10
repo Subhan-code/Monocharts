@@ -124,12 +124,20 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
 
     const io = new IntersectionObserver(([entry]) => {
       isInViewRef.current = entry.isIntersecting;
+      if (entry.isIntersecting) {
+        if (!requestRef.current) requestRef.current = requestAnimationFrame(draw);
+      } else {
+        if (requestRef.current) {
+          cancelAnimationFrame(requestRef.current);
+          requestRef.current = undefined;
+        }
+      }
     }, { threshold: 0.05 });
     io.observe(canvas);
 
     const draw = () => {
-      requestRef.current = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
+      requestRef.current = requestAnimationFrame(draw);
 
       const rect = rectRef.current;
       if (rect.width <= 0 || rect.height <= 0) return;
@@ -138,7 +146,7 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
