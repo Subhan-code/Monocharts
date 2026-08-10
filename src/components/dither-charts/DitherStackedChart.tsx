@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { CreditCard, DollarSign } from 'lucide-react';
 
@@ -132,6 +132,27 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
   
   const hoverRef = useRef({ b: hoverBranch, band: hoverBand });
   useEffect(() => { hoverRef.current = { b: hoverBranch, band: hoverBand }; }, [hoverBranch, hoverBand]);
+
+  const handleCanvasPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    const bCount = BRANCHES.length;
+    const slotW = rect.width / bCount;
+    const idx = Math.floor(x / slotW);
+
+    if (idx >= 0 && idx < bCount) {
+      setHoverBranch(idx);
+    } else {
+      setHoverBranch(null);
+    }
+  }, []);
+
+  const handleCanvasPointerLeave = useCallback(() => {
+    setHoverBranch(null);
+  }, []);
 
   useEffect(() => {
     fromStateRef.current = new Map(drawnRef.current);
@@ -317,8 +338,15 @@ export function DitherStackedChart({ theme = 'dark', compact = false }: DitherSt
       </div>
 
       {/* Main Canvas Chart */}
-      <div className="relative h-[200px] w-full rounded-xl overflow-hidden">
-        <canvas ref={canvasRef} className="w-full h-full block" />
+      <div className="relative h-[200px] w-full rounded-xl overflow-hidden touch-none">
+        <canvas 
+          ref={canvasRef} 
+          onPointerMove={handleCanvasPointerMove}
+          onPointerDown={handleCanvasPointerMove}
+          onPointerLeave={handleCanvasPointerLeave}
+          onPointerUp={handleCanvasPointerLeave}
+          className="w-full h-full block cursor-pointer" 
+        />
       </div>
 
       {/* Branch Labels */}

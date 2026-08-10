@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react';
 import { Users } from 'lucide-react';
 
@@ -124,6 +124,46 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
   
   const hoverRef = useRef(hoverIndex);
   useEffect(() => { hoverRef.current = hoverIndex; }, [hoverIndex]);
+
+  const handleCanvasPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const dx = x - cx;
+    const dy = y - cy;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < 20 || dist > rect.width / 2 + 10) {
+      setHoverIndex(null);
+      return;
+    }
+
+    let angle = Math.atan2(dy, dx);
+    if (angle < -Math.PI / 2) angle += Math.PI * 2;
+
+    let start = -Math.PI / 2;
+    const curShares = dispSharesRef.current;
+    let found: number | null = null;
+
+    for (let i = 0; i < curShares.length; i++) {
+      const sweep = curShares[i] * Math.PI * 2;
+      if (angle >= start && angle <= start + sweep) {
+        found = i;
+        break;
+      }
+      start += sweep;
+    }
+    setHoverIndex(found);
+  }, []);
+
+  const handleCanvasPointerLeave = useCallback(() => {
+    setHoverIndex(null);
+  }, []);
 
   useEffect(() => {
     if (dispSharesRef.current.length === 0) {
@@ -304,8 +344,15 @@ export function DitherDonutChart({ theme = 'dark', compact = false }: DitherDonu
       {/* Main Content Layout */}
       <div className="flex flex-col sm:flex-row items-center gap-6">
         {/* Canvas Donut */}
-        <div className="relative w-[180px] h-[180px] shrink-0">
-          <canvas ref={canvasRef} className="w-full h-full block" />
+        <div className="relative w-[180px] h-[180px] shrink-0 touch-none">
+          <canvas 
+            ref={canvasRef} 
+            onPointerMove={handleCanvasPointerMove}
+            onPointerDown={handleCanvasPointerMove}
+            onPointerLeave={handleCanvasPointerLeave}
+            onPointerUp={handleCanvasPointerLeave}
+            className="w-full h-full block cursor-pointer" 
+          />
         </div>
 
         {/* Plan Breakdown List */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 const STAGES_DATA = [
   { name: 'Q1 Funnel', stages: [{ label: 'Visitors', val: 100, color: '#FFFFFF' }, { label: 'Leads', val: 62, color: '#E2E8F0' }, { label: 'Deals', val: 38, color: '#CBD5E1' }, { label: 'Won', val: 18, color: '#94A3B8' }] },
@@ -21,10 +21,26 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rectRef = useRef({ width: 0, height: 0 });
   const isInViewRef = useRef(true);
+  const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -1000, y: -1000, active: false });
 
   const targetDataRef = useRef(period.stages);
   const fromDataRef = useRef(period.stages);
   const morphStartTimeRef = useRef(0);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    pointerRef.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      active: true,
+    };
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
+    pointerRef.current.active = false;
+  }, []);
 
   useEffect(() => {
     fromDataRef.current = targetDataRef.current;
@@ -52,6 +68,9 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
 
     let req: number;
     let time = 0;
+    let currPx = -1000;
+    let currPy = -1000;
+
     const draw = () => {
       req = requestAnimationFrame(draw);
       if (!isInViewRef.current) return;
@@ -63,7 +82,7 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
@@ -74,6 +93,15 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
 
       let prog = Math.min(1, (performance.now() - morphStartTimeRef.current) / 500);
       const e = 1 - Math.pow(2, -10 * prog);
+
+      const targetP = pointerRef.current;
+      if (targetP.active) {
+        currPx += (targetP.x - currPx) * 0.25;
+        currPy += (targetP.y - currPy) * 0.25;
+      } else {
+        currPx += (-1000 - currPx) * 0.1;
+        currPy += (-1000 - currPy) * 0.1;
+      }
 
       const count = period.stages.length;
       const w = rect.width;
@@ -103,13 +131,31 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
             const jy = by + cell / 2;
             const jit = hash(jx, jy);
 
+            const pdx = jx - currPx;
+            const pdy = jy - currPy;
+            const pdist = Math.hypot(pdx, pdy);
+            const ripple = Math.max(0, 1 - pdist / 35);
+
             const waveRaw = Math.sin(jx * 0.05 + time) + Math.sin(jy * 0.05 + time * 0.7);
             const mod = smoothstep(-1.5, 1.5, waveRaw);
 
-            const sz = cell * (0.35 + 0.35 * mod) * (0.8 + 0.4 * jit);
+            let sz = cell * (0.35 + 0.35 * mod) * (0.8 + 0.4 * jit);
+            if (ripple > 0) {
+              sz = sz * (1 + ripple * 0.8);
+            }
             ctx.fillRect(bx + (cell - sz)/2, by + (cell - sz)/2, sz, sz);
           }
         }
+        ctx.restore();
+      }
+
+      if (currPx > 0 && currPy > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(currPx, currPy, 14, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         ctx.restore();
       }
 
@@ -126,8 +172,15 @@ export const DitherFunnelChart = React.memo(function DitherFunnelChart({ theme =
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-2">
-      <div className="relative w-full h-[140px] flex items-center justify-center">
-        <canvas ref={canvasRef} className="w-full h-full pointer-events-none" />
+      <div className="relative w-full h-[140px] flex items-center justify-center touch-none">
+        <canvas 
+          ref={canvasRef} 
+          onPointerMove={handlePointerMove}
+          onPointerDown={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
+          onPointerUp={handlePointerLeave}
+          className="w-full h-full cursor-crosshair" 
+        />
       </div>
     </div>
   );

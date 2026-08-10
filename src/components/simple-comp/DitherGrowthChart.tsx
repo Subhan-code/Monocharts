@@ -347,7 +347,9 @@ export function DitherGrowthChart({ theme = 'dark', compact = false }: DitherGro
             ref={wrapperRef}
             className="relative h-[180px] touch-none cursor-crosshair overflow-hidden rounded-xl"
             onPointerMove={handlePointer}
+            onPointerDown={handlePointer}
             onPointerLeave={handlePointerLeave}
+            onPointerUp={handlePointerLeave}
           >
             {/* Grid overlay */}
             <div className="absolute inset-0 border-t border-b border-dashed border-white/10 pointer-events-none" />
