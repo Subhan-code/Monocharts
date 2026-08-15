@@ -12,6 +12,7 @@ import { CliPage } from './components/CliPage';
 import { SkillsPage } from './components/SkillsPage';
 import { DitherChartsPage, SimpleCompPage } from './components/DitherChartsPage';
 import { EvilChartsPage } from './components/EvilChartsPage';
+import { MonoChartsPage } from './components/MonoChartsPage';
 import { DitherChartsGrid, SimpleCompGrid } from './components/dither-charts/DitherChartsGrid';
 import { ThreeDPage } from './components/ThreeDPage';
 import { useWebHaptics } from './hooks/useWebHaptics';
@@ -40,7 +41,7 @@ import { CardTimeMachine } from './components/cards/CardTimeMachine';
 
 type LayoutMode = 'list' | 'grid' | 'matrix';
 type SortMode = 'default' | 'alphabetical';
-type PageMode = 'home' | 'cli' | 'skills' | 'dither-charts' | '3d-page' | 'simple-comp' | 'evil-charts';
+type PageMode = 'home' | 'cli' | 'skills' | 'dither-charts' | '3d-page' | 'simple-comp' | 'evil-charts' | 'mono-charts';
 type CatalogTabType = 'buttons' | 'cards' | 'carousels' | 'loaders' | 'dither-charts' | 'simple-comp';
 
 interface SponsorSlot {
@@ -148,6 +149,8 @@ export default function App() {
         setCurrentPage('cli');
       } else if (hash.startsWith('#/skills') || hash.startsWith('#skills')) {
         setCurrentPage('skills');
+      } else if (hash.startsWith('#/mono-charts') || hash.startsWith('#mono-charts')) {
+        setCurrentPage('mono-charts');
       } else if (hash.startsWith('#/evil-charts') || hash.startsWith('#evil-charts')) {
         setCurrentPage('evil-charts');
       } else if (hash.startsWith('#/dither-charts') || hash.startsWith('#dither-charts') || hash.startsWith('#/simple-comp') || hash.startsWith('#simple-comp')) {
@@ -427,6 +430,16 @@ export default function App() {
                 Skills
               </button>
               <button 
+                onClick={() => navigateTo('mono-charts')}
+                className={`inline-flex items-center justify-center h-[36px] px-[14px] rounded-full text-[13px] font-medium leading-[16px] cursor-pointer no-underline whitespace-nowrap transition-all duration-200 border-0 ${
+                  currentPage === 'mono-charts'
+                    ? (theme === 'dark' ? 'text-white bg-[rgba(255,255,255,0.08)]' : 'text-black bg-neutral-200/80 font-semibold')
+                    : (theme === 'dark' ? 'text-[rgba(202,202,202,0.7)] hover:text-white hover:bg-[rgba(255,255,255,0.04)]' : 'text-neutral-600 hover:text-black hover:bg-neutral-200/40')
+                }`}
+              >
+                Mono Charts
+              </button>
+              <button 
                 onClick={() => navigateTo('evil-charts')}
                 className={`inline-flex items-center justify-center h-[36px] px-[14px] rounded-full text-[13px] font-medium leading-[16px] cursor-pointer no-underline whitespace-nowrap transition-all duration-200 border-0 ${
                   currentPage === 'evil-charts'
@@ -595,6 +608,16 @@ export default function App() {
             transition={{ duration: 0.25 }}
           >
             <SkillsPage theme={theme} onNavigateHome={() => navigateTo('home')} />
+          </motion.div>
+        ) : currentPage === 'mono-charts' ? (
+          <motion.div
+            key="mono-charts-page"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            <MonoChartsPage theme={theme} showToast={showToast} triggerHaptic={triggerHaptic} onNavigateHome={() => navigateTo('home')} />
           </motion.div>
         ) : currentPage === 'evil-charts' ? (
           <motion.div
