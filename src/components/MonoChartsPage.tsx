@@ -1,19 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sparkles,
-  Zap,
   Search,
   Grid,
   Columns,
   Copy,
   Check,
-  Code2,
   Circle,
-  Box,
-  ArrowRight,
   Filter,
-  SlidersHorizontal,
 } from 'lucide-react';
 
 import { MonoRoundedLineChart } from './mono-charts/MonoRoundedLineChart';
@@ -22,6 +16,20 @@ import { MonoRoundedAreaChart } from './mono-charts/MonoRoundedAreaChart';
 import { MonoRoundedDonutChart } from './mono-charts/MonoRoundedDonutChart';
 import { MonoRoundedComposedChart } from './mono-charts/MonoRoundedComposedChart';
 import { MonoRoundedScatterChart } from './mono-charts/MonoRoundedScatterChart';
+import { MonoRoundedStepChart } from './mono-charts/MonoRoundedStepChart';
+import { MonoRoundedStackedBarChart } from './mono-charts/MonoRoundedStackedBarChart';
+import { MonoRoundedRadarChart } from './mono-charts/MonoRoundedRadarChart';
+import { MonoRoundedRadialGaugeChart } from './mono-charts/MonoRoundedRadialGaugeChart';
+import { MonoRoundedFunnelChart } from './mono-charts/MonoRoundedFunnelChart';
+import { MonoRoundedHeatmapChart } from './mono-charts/MonoRoundedHeatmapChart';
+import { MonoRoundedSparklineChart } from './mono-charts/MonoRoundedSparklineChart';
+import { MonoRoundedBubbleChart } from './mono-charts/MonoRoundedBubbleChart';
+import { MonoRoundedTreemapChart } from './mono-charts/MonoRoundedTreemapChart';
+import { MonoRoundedStreamChart } from './mono-charts/MonoRoundedStreamChart';
+import { MonoRoundedMeterChart } from './mono-charts/MonoRoundedMeterChart';
+import { MonoRoundedWaterfallChart } from './mono-charts/MonoRoundedWaterfallChart';
+import { MonoRoundedPolarChart } from './mono-charts/MonoRoundedPolarChart';
+import { MonoRoundedRangeChart } from './mono-charts/MonoRoundedRangeChart';
 
 import { InViewRender } from './InViewRender';
 import { IconSwap, IconSwapItem } from './IconSwap';
@@ -33,7 +41,7 @@ interface MonoChartsPageProps {
   onNavigateHome?: () => void;
 }
 
-export type MonoCategory = 'all' | 'line' | 'bar' | 'area' | 'donut' | 'composed' | 'scatter';
+export type MonoCategory = 'all' | 'line' | 'bar' | 'area' | 'donut' | 'radial' | 'matrix' | 'composed' | 'scatter';
 
 interface MonoCardDef {
   id: string;
@@ -46,7 +54,7 @@ interface MonoCardDef {
   tags: string[];
 }
 
-export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome }: MonoChartsPageProps) {
+export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPageProps) {
   const isDark = theme === 'dark';
   const [activeCategory, setActiveCategory] = useState<MonoCategory>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -65,13 +73,13 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
   };
 
   const CATEGORY_TABS: { id: MonoCategory; label: string }[] = [
-    { id: 'all', label: 'All Mono Charts' },
+    { id: 'all', label: 'All 20 Mono Charts' },
     { id: 'line', label: 'Spline Lines' },
     { id: 'bar', label: 'Rounded Bars' },
     { id: 'area', label: 'Curved Waves' },
-    { id: 'donut', label: 'Donut Rings' },
-    { id: 'composed', label: 'Composed Hybrid' },
-    { id: 'scatter', label: 'Scatter Matrix' },
+    { id: 'donut', label: 'Donuts' },
+    { id: 'radial', label: 'Radials' },
+    { id: 'matrix', label: 'Matrix & Tiles' },
   ];
 
   const CARD_ITEMS: MonoCardDef[] = useMemo(() => [
@@ -79,7 +87,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
       id: 'mono-rounded-line',
       title: 'Mono Rounded Spline Line',
       category: 'line',
-      description: 'Minimalist monochromatic line chart with smooth rounded spline curves, rounded stroke caps, and dot callouts.',
+      description: 'Minimalist monochromatic line chart with smooth rounded spline curves and rounded stroke caps.',
       cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-line',
       codeSnippet: `import { MonoRoundedLineChart } from '@/components/ui/mono-rounded-line';\n\nexport default function Demo() {\n  return <MonoRoundedLineChart theme="${theme}" />;\n}`,
       component: <MonoRoundedLineChart theme={theme} compact={viewDensity === 'compact'} />,
@@ -135,6 +143,146 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
       component: <MonoRoundedScatterChart theme={theme} compact={viewDensity === 'compact'} />,
       tags: ['scatter', 'matrix', 'nodes', 'mono'],
     },
+    {
+      id: 'mono-rounded-step',
+      title: 'Mono Step Progression',
+      category: 'line',
+      description: 'Monochromatic discrete staircase step chart with rounded stroke joins and level callouts.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-step',
+      codeSnippet: `import { MonoRoundedStepChart } from '@/components/ui/mono-rounded-step';\n\nexport default function Demo() {\n  return <MonoRoundedStepChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedStepChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['step', 'staircase', 'discrete', 'line'],
+    },
+    {
+      id: 'mono-rounded-stacked-bar',
+      title: 'Mono Stacked Tones Bar',
+      category: 'bar',
+      description: 'Monochromatic stacked bar visualizer with rounded end pill geometry and layered opacity tones.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-stacked-bar',
+      codeSnippet: `import { MonoRoundedStackedBarChart } from '@/components/ui/mono-rounded-stacked-bar';\n\nexport default function Demo() {\n  return <MonoRoundedStackedBarChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedStackedBarChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['stacked', 'tones', 'bar', 'pill'],
+    },
+    {
+      id: 'mono-rounded-radar',
+      title: 'Mono Polygon Web Radar',
+      category: 'radial',
+      description: 'Minimalist monochromatic multi-axis polygon radar web with smooth rounded stroke join geometry.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radar',
+      codeSnippet: `import { MonoRoundedRadarChart } from '@/components/ui/mono-rounded-radar';\n\nexport default function Demo() {\n  return <MonoRoundedRadarChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedRadarChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['radar', 'polygon', 'web', 'radial'],
+    },
+    {
+      id: 'mono-rounded-radial-gauge',
+      title: 'Mono Concentric Radial Rings',
+      category: 'radial',
+      description: 'Monochromatic concentric progress rings with rounded arc caps and layered utilization metrics.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radial-gauge',
+      codeSnippet: `import { MonoRoundedRadialGaugeChart } from '@/components/ui/mono-rounded-radial-gauge';\n\nexport default function Demo() {\n  return <MonoRoundedRadialGaugeChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedRadialGaugeChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['radial', 'rings', 'gauge', 'concentric'],
+    },
+    {
+      id: 'mono-rounded-funnel',
+      title: 'Mono Stage Funnel',
+      category: 'bar',
+      description: 'Horizontal funnel stage visualizer using monochromatic pill bars with rounded endcaps.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-funnel',
+      codeSnippet: `import { MonoRoundedFunnelChart } from '@/components/ui/mono-rounded-funnel';\n\nexport default function Demo() {\n  return <MonoRoundedFunnelChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedFunnelChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['funnel', 'stage', 'pipeline', 'bar'],
+    },
+    {
+      id: 'mono-rounded-heatmap',
+      title: 'Mono Dot Matrix Heatmap',
+      category: 'matrix',
+      description: 'Monochromatic activity matrix with rounded corner cells and density opacity shading.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-heatmap',
+      codeSnippet: `import { MonoRoundedHeatmapChart } from '@/components/ui/mono-rounded-heatmap';\n\nexport default function Demo() {\n  return <MonoRoundedHeatmapChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedHeatmapChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['heatmap', 'matrix', 'density', 'nodes'],
+    },
+    {
+      id: 'mono-rounded-sparkline',
+      title: 'Mono Sparkline Telemetry',
+      category: 'line',
+      description: 'Compact telemetry row suite featuring rounded micro splines and live metric readouts.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-sparkline',
+      codeSnippet: `import { MonoRoundedSparklineChart } from '@/components/ui/mono-rounded-sparkline';\n\nexport default function Demo() {\n  return <MonoRoundedSparklineChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedSparklineChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['sparkline', 'telemetry', 'splines', 'rows'],
+    },
+    {
+      id: 'mono-rounded-bubble',
+      title: 'Mono Bubble Clusters',
+      category: 'scatter',
+      description: 'Scaled circle bubble distribution with rounded stroke outlines and monochromatic opacity fills.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-bubble',
+      codeSnippet: `import { MonoRoundedBubbleChart } from '@/components/ui/mono-rounded-bubble';\n\nexport default function Demo() {\n  return <MonoRoundedBubbleChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedBubbleChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['bubble', 'clusters', 'z-scale', 'spheres'],
+    },
+    {
+      id: 'mono-rounded-treemap',
+      title: 'Mono Tile Treemap',
+      category: 'matrix',
+      description: 'Partition allocation treemap featuring rounded corner tiles and monochrome contrast shading.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-treemap',
+      codeSnippet: `import { MonoRoundedTreemapChart } from '@/components/ui/mono-rounded-treemap';\n\nexport default function Demo() {\n  return <MonoRoundedTreemapChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedTreemapChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['treemap', 'tiles', 'partition', 'allocation'],
+    },
+    {
+      id: 'mono-rounded-stream',
+      title: 'Mono Fluid Stream Wave',
+      category: 'area',
+      description: 'Multi-layer fluid stream wave area visualizer with rounded stroke joins and soft monochrome gradients.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-stream',
+      codeSnippet: `import { MonoRoundedStreamChart } from '@/components/ui/mono-rounded-stream';\n\nexport default function Demo() {\n  return <MonoRoundedStreamChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedStreamChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['stream', 'fluid', 'wave', 'area'],
+    },
+    {
+      id: 'mono-rounded-meter',
+      title: 'Mono Arc Meter Gauge',
+      category: 'radial',
+      description: 'Monochromatic semi-circle arc meter gauge with rounded stroke endcaps and center indicator.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-meter',
+      codeSnippet: `import { MonoRoundedMeterChart } from '@/components/ui/mono-rounded-meter';\n\nexport default function Demo() {\n  return <MonoRoundedMeterChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedMeterChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['meter', 'gauge', 'arc', 'radial'],
+    },
+    {
+      id: 'mono-rounded-waterfall',
+      title: 'Mono Waterfall Steps',
+      category: 'bar',
+      description: 'Sequential delta step bar chart featuring floating pillars with rounded corner geometry.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-waterfall',
+      codeSnippet: `import { MonoRoundedWaterfallChart } from '@/components/ui/mono-rounded-waterfall';\n\nexport default function Demo() {\n  return <MonoRoundedWaterfallChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedWaterfallChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['waterfall', 'steps', 'delta', 'pillars'],
+    },
+    {
+      id: 'mono-rounded-polar',
+      title: 'Mono Polar Radial Pillars',
+      category: 'radial',
+      description: 'Polar angle radial bar chart with 360-degree rounded arc pillars.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-polar',
+      codeSnippet: `import { MonoRoundedPolarChart } from '@/components/ui/mono-rounded-polar';\n\nexport default function Demo() {\n  return <MonoRoundedPolarChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedPolarChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['polar', 'radial', 'pillars', 'arcs'],
+    },
+    {
+      id: 'mono-rounded-range',
+      title: 'Mono Range Band Area',
+      category: 'area',
+      description: 'Min-Max floating variance area band with smooth rounded spline boundary strokes.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-range',
+      codeSnippet: `import { MonoRoundedRangeChart } from '@/components/ui/mono-rounded-range';\n\nexport default function Demo() {\n  return <MonoRoundedRangeChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedRangeChart theme={theme} compact={viewDensity === 'compact'} />,
+      tags: ['range', 'band', 'variance', 'area'],
+    },
   ], [theme, viewDensity]);
 
   const filteredItems = useMemo(() => {
@@ -159,45 +307,21 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
     <div className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 font-sans">
       
       {/* Hero Header */}
-      <div className="flex flex-col items-center text-center gap-4 max-w-3xl mx-auto">
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide uppercase transition-all shadow-sm ${
+      <div className="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
+        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase transition-all shadow-sm ${
           isDark ? 'bg-white/10 text-neutral-200 border border-white/20' : 'bg-neutral-900 text-white border border-neutral-700'
         }`}>
           <Circle className="w-3.5 h-3.5 fill-current" />
-          <span>Minimalist Mono Aesthetics</span>
+          <span>20 Minimalist Visualizers</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
           Mono Charts
         </h1>
 
-        <p className={`text-sm sm:text-base max-w-xl ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-          Ultra-sleek, monochromatic visualizers where every line, curve, bar pillar, and ring features rounded corner geometry and smooth animated reveals.
+        <p className={`text-sm sm:text-base max-w-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
+          A collection of 20 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
         </p>
-
-        {/* Hero Performance Pill Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs font-mono">
-          <div className={`px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${
-            isDark ? 'bg-white/5 border-white/10 text-neutral-300' : 'bg-neutral-100 border-neutral-200 text-neutral-800'
-          }`}>
-            <Sparkles className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Rounded Stroke Caps</span>
-          </div>
-
-          <div className={`px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${
-            isDark ? 'bg-white/5 border-white/10 text-neutral-300' : 'bg-neutral-100 border-neutral-200 text-neutral-800'
-          }`}>
-            <Box className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Full Radius Pillars</span>
-          </div>
-
-          <div className={`px-3 py-1.5 rounded-full border flex items-center gap-1.5 ${
-            isDark ? 'bg-white/5 border-white/10 text-neutral-300' : 'bg-neutral-100 border-neutral-200 text-neutral-800'
-          }`}>
-            <Code2 className="w-3.5 h-3.5 text-neutral-400" />
-            <span>Zero-Noise Aesthetics</span>
-          </div>
-        </div>
       </div>
 
       {/* Control Bar: Search Input, Category Tabs & Layout Switches */}
@@ -215,7 +339,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
             <Search className="w-4 h-4 opacity-50 mr-2 shrink-0" />
             <input
               type="text"
-              placeholder="Search mono charts..."
+              placeholder="Search 20 mono charts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-transparent text-xs outline-none border-none placeholder:opacity-50"
@@ -223,7 +347,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-xs opacity-50 hover:opacity-100 ml-1"
+                className="text-xs opacity-50 hover:opacity-100 ml-1 cursor-pointer"
               >
                 Clear
               </button>
@@ -267,7 +391,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
             <div className={`ml-2 text-xs font-mono tabular-nums px-2.5 py-1 rounded-full border ${
               isDark ? 'bg-white/5 border-white/10 text-neutral-400' : 'bg-neutral-100 border-neutral-200 text-neutral-600'
             }`}>
-              {filteredItems.length} {filteredItems.length === 1 ? 'chart' : 'charts'}
+              {filteredItems.length} / 20
             </div>
           </div>
         </div>
@@ -307,8 +431,8 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic, onNavigateHome
           isDark ? 'bg-[#181818] border-white/10 text-neutral-400' : 'bg-white border-neutral-200 text-neutral-600'
         }`}>
           <Filter className="w-8 h-8 opacity-40" />
-          <h3 className="text-lg font-semibold">No mono chart visualizers match your query</h3>
-          <p className="text-xs opacity-70">Try searching for another keyword or selecting "All Mono Charts".</p>
+          <h3 className="text-lg font-semibold">No mono charts match your filter</h3>
+          <p className="text-xs opacity-70">Try searching for another term or select "All 20 Mono Charts".</p>
           <button
             onClick={() => {
               setActiveCategory('all');

@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -51,14 +51,14 @@ export function MonoRoundedLineChart({ theme = 'dark', compact = false }: MonoRo
         <div>
           <div className="flex items-center gap-2">
             <span className={`text-xs font-semibold tracking-wider uppercase ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
-              Mono Rounded Splines
+              Spline Dynamics
             </span>
             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-white border border-white/20">
-              Smooth Caps
+              Line
             </span>
           </div>
           <div className="text-xl font-bold tracking-tight tabular-nums mt-0.5 font-sans">
-            {latestVal}k <span className="text-xs font-normal opacity-70">active nodes</span>
+            {latestVal}k <span className="text-xs font-normal opacity-70">nodes</span>
           </div>
         </div>
 
@@ -111,12 +111,11 @@ export function MonoRoundedLineChart({ theme = 'dark', compact = false }: MonoRo
             />
             <Tooltip content={<DitherChartTooltipContent theme={theme} indicator="dot" />} />
 
-            {/* Secondary Monochromatic Line with Rounded Caps */}
             {activeSeries === 'all' && (
               <Line
                 type="monotone"
                 dataKey="secondary"
-                name="Baseline Metric"
+                name="Baseline"
                 stroke={isDark ? '#52525B' : '#A1A1AA'}
                 strokeWidth={2}
                 strokeLinecap="round"
@@ -127,11 +126,10 @@ export function MonoRoundedLineChart({ theme = 'dark', compact = false }: MonoRo
               />
             )}
 
-            {/* Primary Rounded Spline Line */}
             <Line
               type="monotone"
               dataKey="value"
-              name="Active Metric"
+              name="Active"
               stroke={isDark ? '#FFFFFF' : '#09090B'}
               strokeWidth={3}
               strokeLinecap="round"
@@ -157,10 +155,10 @@ export function MonoRoundedLineChart({ theme = 'dark', compact = false }: MonoRo
       {/* Footer Metrics */}
       <div className="flex items-center justify-between mt-3 pt-1 border-t border-white/5 text-[11px] font-mono">
         <span className={isDark ? 'text-neutral-400' : 'text-neutral-600'}>
-          Spline Radius: Smooth Rounded
+          Rounded Caps
         </span>
         <span className={isDark ? 'text-white font-medium' : 'text-black font-medium'}>
-          +61.5% Surge
+          84k Peak
         </span>
       </div>
     </div>
