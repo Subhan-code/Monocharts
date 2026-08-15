@@ -8,6 +8,8 @@ import {
   Check,
   Circle,
   Filter,
+  Github,
+  ExternalLink,
 } from 'lucide-react';
 
 import { MonoRoundedLineChart } from './mono-charts/MonoRoundedLineChart';
@@ -322,6 +324,22 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
         <p className={`text-sm sm:text-base max-w-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
           A collection of 20 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
         </p>
+
+        {/* GitHub Repository CTA Link */}
+        <a
+          href="https://github.com/Subhan-code/Monocharts"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`mt-1 inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all shadow-md cursor-pointer border ${
+            isDark
+              ? 'bg-white text-black border-white hover:bg-neutral-200 hover:scale-105'
+              : 'bg-black text-white border-black hover:bg-neutral-800 hover:scale-105'
+          }`}
+        >
+          <Github className="w-4 h-4 shrink-0" />
+          <span>View GitHub Repository</span>
+          <ExternalLink className="w-3.5 h-3.5 opacity-70 ml-0.5" />
+        </a>
       </div>
 
       {/* Control Bar: Search Input, Category Tabs & Layout Switches */}
