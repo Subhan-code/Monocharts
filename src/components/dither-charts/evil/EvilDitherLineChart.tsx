@@ -35,29 +35,41 @@ interface EvilDitherLineChartProps {
 export function EvilDitherLineChart({ theme = 'dark', compact = false }: EvilDitherLineChartProps) {
   const isDark = theme === 'dark';
   const idPrefix = useId().replace(/:/g, '');
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const [data, setData] = useState<LinePoint[]>(INITIAL_POINTS);
   const [isLive, setIsLive] = useState<boolean>(true);
+  const [isInView, setIsInView] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!isLive) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { rootMargin: '50px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isLive || !isInView) return;
     const interval = setInterval(() => {
       setData((prev) => {
-        const last = prev[prev.length - 1];
         const nextTime = new Date(Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const nextVal = Math.floor(12 + Math.random() * 22);
         const nextP99 = Math.floor(nextVal + 10 + Math.random() * 15);
-        const nextArr = [...prev.slice(1), { time: nextTime, latency: nextVal, p99: nextP99 }];
-        return nextArr;
+        return [...prev.slice(1), { time: nextTime, latency: nextVal, p99: nextP99 }];
       });
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [isLive]);
+  }, [isLive, isInView]);
 
   const latestVal = data[data.length - 1]?.latency ?? 14;
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full rounded-[24px] transition-all duration-300 group flex flex-col justify-between overflow-hidden p-4 sm:p-5 ${
         compact ? 'h-[220px] sm:h-[268px]' : 'min-h-[290px]'
       } ${
