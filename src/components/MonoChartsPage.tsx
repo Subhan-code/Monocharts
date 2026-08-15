@@ -8,7 +8,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-import { GitHubActivity } from './mono-charts/GitHubActivity';
+import { MonoActivityHeatmap } from './mono-charts/MonoActivityHeatmap';
 import { MonoRoundedLineChart } from './mono-charts/MonoRoundedLineChart';
 import { MonoRoundedBarChart } from './mono-charts/MonoRoundedBarChart';
 import { MonoRoundedAreaChart } from './mono-charts/MonoRoundedAreaChart';
@@ -19,6 +19,9 @@ import { MonoRoundedCandlestickChart } from './mono-charts/MonoRoundedCandlestic
 import { MonoRoundedKpiCardChart } from './mono-charts/MonoRoundedKpiCardChart';
 import { MonoRoundedPyramidChart } from './mono-charts/MonoRoundedPyramidChart';
 import { MonoRoundedRadialBarGroup } from './mono-charts/MonoRoundedRadialBarGroup';
+import { MonoRoundedGaugeArc } from './mono-charts/MonoRoundedGaugeArc';
+import { MonoRoundedBulletChart } from './mono-charts/MonoRoundedBulletChart';
+import { MonoRoundedSankeyChart } from './mono-charts/MonoRoundedSankeyChart';
 import { MonoRoundedStepChart } from './mono-charts/MonoRoundedStepChart';
 import { MonoRoundedStackedBarChart } from './mono-charts/MonoRoundedStackedBarChart';
 import { MonoRoundedRadarChart } from './mono-charts/MonoRoundedRadarChart';
@@ -70,12 +73,28 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
 
   const CARD_ITEMS: MonoCardDef[] = useMemo(() => [
     {
-      id: 'github-activity',
-      title: 'GitHub Activity Heatmap',
-      description: 'GitHub style contribution activity calendar heatmap with month headers, cell tooltips, and top repositories drawer.',
-      cliCommand: 'npx @subhanhq/amicro@latest add github-activity',
-      codeSnippet: `import { GitHubActivity } from '@/components/ui/github-activity';\n\nexport default function Demo() {\n  return <GitHubActivity username="Subhan-code" theme="${theme}" />;\n}`,
-      component: <GitHubActivity theme={theme} defaultOpen={false} />,
+      id: 'mono-activity-green',
+      title: 'Emerald Activity Heatmap',
+      description: 'Ultra-clean emerald green contribution heatmap grid with 20-week activity telemetry.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-green',
+      codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="green" theme="${theme}" />;\n}`,
+      component: <MonoActivityHeatmap theme={theme} accentColor="green" />,
+    },
+    {
+      id: 'mono-activity-blue',
+      title: 'Sky Blue Activity Heatmap',
+      description: 'Vibrant sky blue contribution activity matrix with cell tooltips and minimalist month headers.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-blue',
+      codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="blue" theme="${theme}" />;\n}`,
+      component: <MonoActivityHeatmap theme={theme} accentColor="blue" />,
+    },
+    {
+      id: 'mono-activity-purple',
+      title: 'Violet Activity Heatmap',
+      description: 'Deep violet pulse contribution activity grid with rounded node cells and telemetry.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-purple',
+      codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="purple" theme="${theme}" />;\n}`,
+      component: <MonoActivityHeatmap theme={theme} accentColor="purple" />,
     },
     {
       id: 'mono-rounded-line',
@@ -156,6 +175,30 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
       cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radial-group',
       codeSnippet: `import { MonoRoundedRadialBarGroup } from '@/components/ui/mono-rounded-radial-group';\n\nexport default function Demo() {\n  return <MonoRoundedRadialBarGroup theme="${theme}" />;\n}`,
       component: <MonoRoundedRadialBarGroup theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-gauge-arc',
+      title: 'Mono Speedometer Gauge Arc',
+      description: 'Semi-circle arc speedometer gauge dial with rounded stroke endcaps and center score callout.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-gauge-arc',
+      codeSnippet: `import { MonoRoundedGaugeArc } from '@/components/ui/mono-rounded-gauge-arc';\n\nexport default function Demo() {\n  return <MonoRoundedGaugeArc theme="${theme}" />;\n}`,
+      component: <MonoRoundedGaugeArc theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-bullet',
+      title: 'Mono Performance Bullet Target',
+      description: 'Monochromatic performance bullet bar chart featuring target benchmark markers.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-bullet',
+      codeSnippet: `import { MonoRoundedBulletChart } from '@/components/ui/mono-rounded-bullet';\n\nexport default function Demo() {\n  return <MonoRoundedBulletChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedBulletChart theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-sankey',
+      title: 'Mono Flow Sankey Channels',
+      description: 'Flow transfer channel visualizer featuring smooth curved SVG routing bands with rounded endcaps.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-sankey',
+      codeSnippet: `import { MonoRoundedSankeyChart } from '@/components/ui/mono-rounded-sankey';\n\nexport default function Demo() {\n  return <MonoRoundedSankeyChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedSankeyChart theme={theme} />,
     },
     {
       id: 'mono-rounded-step',
@@ -280,7 +323,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
           isDark ? 'bg-white/10 text-neutral-200 border border-white/20' : 'bg-neutral-900 text-white border border-neutral-700'
         }`}>
           <Circle className="w-3.5 h-3.5 fill-current" />
-          <span>25 Minimalist Visualizers</span>
+          <span>30 Minimalist Visualizers</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
@@ -288,7 +331,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
         </h1>
 
         <p className={`text-sm sm:text-base max-w-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-          A collection of 25 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
+          A collection of 30 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
         </p>
 
         {/* GitHub Repository CTA Link */}

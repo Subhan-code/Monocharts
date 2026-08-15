@@ -10,13 +10,31 @@ export interface MonoChartItem {
 
 export const monoChartsData: MonoChartItem[] = [
   {
-    id: 'github-activity',
-    label: 'GitHub Activity Heatmap',
-    kebabName: 'github-activity',
+    id: 'mono-activity-green',
+    label: 'Emerald Activity Heatmap',
+    kebabName: 'mono-activity-green',
     category: 'matrix',
-    description: 'GitHub style contribution activity calendar heatmap with month headers, interactive cell tooltips, and top repositories drawer.',
-    cliCommand: 'npx @subhanhq/amicro@latest add github-activity',
-    codeSnippet: `import { GitHubActivity } from '@/components/ui/github-activity';\n\nexport default function Demo() {\n  return <GitHubActivity username="Subhan-code" theme="dark" />;\n}`
+    description: 'Ultra-clean emerald green contribution heatmap grid with 20-week activity telemetry and hover cell metrics.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-green',
+    codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="green" theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-activity-blue',
+    label: 'Sky Blue Activity Heatmap',
+    kebabName: 'mono-activity-blue',
+    category: 'matrix',
+    description: 'Vibrant sky blue contribution activity matrix with cell tooltips and minimalist month headers.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-blue',
+    codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="blue" theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-activity-purple',
+    label: 'Violet Activity Heatmap',
+    kebabName: 'mono-activity-purple',
+    category: 'matrix',
+    description: 'Deep violet pulse contribution activity grid with rounded node cells and interactive telemetry.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-activity-purple',
+    codeSnippet: `import { MonoActivityHeatmap } from '@/components/ui/mono-activity-heatmap';\n\nexport default function Demo() {\n  return <MonoActivityHeatmap accentColor="purple" theme="dark" />;\n}`
   },
   {
     id: 'mono-rounded-line',
@@ -107,6 +125,33 @@ export const monoChartsData: MonoChartItem[] = [
     description: 'Multi-ring radial progress bar group with rounded arc endcaps and layered utilization metrics.',
     cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radial-group',
     codeSnippet: `import { MonoRoundedRadialBarGroup } from '@/components/ui/mono-rounded-radial-group';\n\nexport default function Demo() {\n  return <MonoRoundedRadialBarGroup theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-gauge-arc',
+    label: 'Mono Speedometer Gauge Arc',
+    kebabName: 'mono-rounded-gauge-arc',
+    category: 'radial',
+    description: 'Semi-circle arc speedometer gauge dial with rounded stroke endcaps and center score callout.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-gauge-arc',
+    codeSnippet: `import { MonoRoundedGaugeArc } from '@/components/ui/mono-rounded-gauge-arc';\n\nexport default function Demo() {\n  return <MonoRoundedGaugeArc theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-bullet',
+    label: 'Mono Performance Bullet Target',
+    kebabName: 'mono-rounded-bullet',
+    category: 'bar',
+    description: 'Monochromatic performance bullet bar chart featuring target benchmark markers.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-bullet',
+    codeSnippet: `import { MonoRoundedBulletChart } from '@/components/ui/mono-rounded-bullet';\n\nexport default function Demo() {\n  return <MonoRoundedBulletChart theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-sankey',
+    label: 'Mono Flow Sankey Channels',
+    kebabName: 'mono-rounded-sankey',
+    category: 'matrix',
+    description: 'Flow transfer channel visualizer featuring smooth curved SVG routing bands with rounded endcaps.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-sankey',
+    codeSnippet: `import { MonoRoundedSankeyChart } from '@/components/ui/mono-rounded-sankey';\n\nexport default function Demo() {\n  return <MonoRoundedSankeyChart theme="dark" />;\n}`
   },
   {
     id: 'mono-rounded-step',
