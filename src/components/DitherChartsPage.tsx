@@ -1,5 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { EvilDitherBarChart } from './dither-charts/evil/EvilDitherBarChart';
+import { EvilDitherAreaChart } from './dither-charts/evil/EvilDitherAreaChart';
+import { EvilDitherLineChart } from './dither-charts/evil/EvilDitherLineChart';
+import { EvilDitherPieChart } from './dither-charts/evil/EvilDitherPieChart';
+import { EvilDitherComposedChart } from './dither-charts/evil/EvilDitherComposedChart';
+import { EvilDitherRadarChart } from './dither-charts/evil/EvilDitherRadarChart';
+import { EvilDitherRadialChart } from './dither-charts/evil/EvilDitherRadialChart';
+
+// Legacy Dither Visualizers
 import { DitherDonutChart } from './dither-charts/DitherDonutChart';
 import { DitherGrowthChart } from './dither-charts/DitherGrowthChart';
 import { DitherStackedChart } from './dither-charts/DitherStackedChart';
@@ -11,8 +20,9 @@ import { DeviceUsageChart } from './dither-charts/DeviceUsageChart';
 import { StorageUsageChart } from './dither-charts/StorageUsageChart';
 import { RevenueLineChart } from './dither-charts/RevenueLineChart';
 import { UptimeChart } from './dither-charts/UptimeChart';
+
 import { InViewRender } from './InViewRender';
-import { Box, Sparkles, ArrowRight } from 'lucide-react';
+import { Box, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
 interface DitherChartsPageProps {
   theme: 'dark' | 'light';
@@ -21,7 +31,7 @@ interface DitherChartsPageProps {
   onNavigate3D?: () => void;
 }
 
-type CompCategory = 'all' | 'donut' | 'growth' | 'stacked';
+type CompCategory = 'all' | 'bar-area' | 'line-composed' | 'donut-radial' | 'radar-heatmap' | 'original-dither';
 
 export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D }: DitherChartsPageProps) {
   const [activeCategory, setActiveCategory] = useState<CompCategory>('all');
@@ -31,6 +41,15 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
     if (triggerHaptic) triggerHaptic('light');
   }, [triggerHaptic]);
 
+  const CATEGORY_LABELS: { id: CompCategory; label: string }[] = [
+    { id: 'all', label: 'All Visualizers' },
+    { id: 'bar-area', label: 'Bar & Area Matrix' },
+    { id: 'line-composed', label: 'Line & Composed' },
+    { id: 'donut-radial', label: 'Donut & Radial Rings' },
+    { id: 'radar-heatmap', label: 'Radar & Gauges' },
+    { id: 'original-dither', label: 'Original Dither Matrix' },
+  ];
+
   return (
     <div className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-10 font-sans">
 
@@ -39,14 +58,14 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
         <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase ${
           theme === 'dark' ? 'bg-white/10 text-neutral-300 border border-white/10' : 'bg-neutral-200 text-neutral-700 border border-neutral-300'
         }`}>
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Canvas Dither Shaders</span>
+          <Zap className="w-3.5 h-3.5 text-emerald-400" />
+          <span>EVIL Engine + Dither Shaders</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">
           Dither Charts
         </h1>
         <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-neutral-400' : 'text-neutral-600'}`}>
-          A curated collection of canvas dither shaders, real-time data visualizers, dot matrix gauges, and interactive micro-charts.
+          State-of-the-art charting primitives powered by EvilCharts backend logic, SVG pixel dither fill matrices, spring physics, and real-time telemetry visualizers.
         </p>
       </div>
 
@@ -92,18 +111,18 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
       </div>
 
       {/* Filter Category Tabs */}
-      <div className="flex items-center justify-center gap-2">
-        {(['all', 'donut', 'growth', 'stacked'] as CompCategory[]).map((cat) => (
+      <div className="flex items-center justify-center flex-wrap gap-2">
+        {CATEGORY_LABELS.map((item) => (
           <button
-            key={cat}
-            onClick={() => handleCategoryChange(cat)}
+            key={item.id}
+            onClick={() => handleCategoryChange(item.id)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium capitalize transition-all cursor-pointer border ${
-              activeCategory === cat
+              activeCategory === item.id
                 ? (theme === 'dark' ? 'bg-white text-black border-white font-semibold' : 'bg-black text-white border-black font-semibold')
                 : (theme === 'dark' ? 'bg-white/5 border-white/10 text-neutral-400 hover:text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-600 hover:text-black')
             }`}
           >
-            {cat === 'all' ? 'All Visualizers' : cat}
+            {item.label}
           </button>
         ))}
       </div>
@@ -119,31 +138,80 @@ export function DitherChartsPage({ theme, showToast, triggerHaptic, onNavigate3D
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="w-full"
+            className="w-full flex flex-col gap-8"
           >
-            {(activeCategory === 'all' || activeCategory === 'donut') && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full mb-6">
-                <InViewRender><DitherDonutChart theme={theme} /></InViewRender>
-                <InViewRender><ServerGauge theme={theme} /></InViewRender>
-                <InViewRender><DeviceUsageChart theme={theme} /></InViewRender>
+            {/* 1. NEW EVIL DITHER ENGINE SUITE */}
+            {(activeCategory === 'all' || activeCategory === 'bar-area') && (
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider mb-4 opacity-60 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  EvilDither Bar & Area Shading Suite
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                  <InViewRender><EvilDitherBarChart theme={theme} /></InViewRender>
+                  <InViewRender><EvilDitherAreaChart theme={theme} /></InViewRender>
+                </div>
               </div>
             )}
 
-            {(activeCategory === 'all' || activeCategory === 'growth') && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full mb-6">
-                <InViewRender><DitherGrowthChart theme={theme} /></InViewRender>
-                <InViewRender><ActivityHeatmap theme={theme} /></InViewRender>
-                <InViewRender><TrafficBubble theme={theme} /></InViewRender>
-                <InViewRender><RevenueLineChart theme={theme} /></InViewRender>
+            {(activeCategory === 'all' || activeCategory === 'line-composed') && (
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider mb-4 opacity-60 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  EvilDither Line Telemetry & Composed Charts
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                  <InViewRender><EvilDitherLineChart theme={theme} /></InViewRender>
+                  <InViewRender><EvilDitherComposedChart theme={theme} /></InViewRender>
+                </div>
               </div>
             )}
 
-            {(activeCategory === 'all' || activeCategory === 'stacked') && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
-                <InViewRender><DitherStackedChart theme={theme} /></InViewRender>
-                <InViewRender><DitherFunnelChart theme={theme} /></InViewRender>
-                <InViewRender><StorageUsageChart theme={theme} /></InViewRender>
-                <InViewRender><UptimeChart theme={theme} /></InViewRender>
+            {(activeCategory === 'all' || activeCategory === 'donut-radial') && (
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider mb-4 opacity-60 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500" />
+                  EvilDither Donut, Pie & Radial Progress Rings
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                  <InViewRender><EvilDitherPieChart theme={theme} /></InViewRender>
+                  <InViewRender><EvilDitherRadialChart theme={theme} /></InViewRender>
+                </div>
+              </div>
+            )}
+
+            {(activeCategory === 'all' || activeCategory === 'radar-heatmap') && (
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider mb-4 opacity-60 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                  EvilDither Radar Web & Polygon Matrix
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                  <InViewRender><EvilDitherRadarChart theme={theme} /></InViewRender>
+                  <InViewRender><ActivityHeatmap theme={theme} /></InViewRender>
+                </div>
+              </div>
+            )}
+
+            {/* 2. ORIGINAL DITHER MATRIX PRESERVED SUITE */}
+            {(activeCategory === 'all' || activeCategory === 'original-dither') && (
+              <div>
+                <div className="text-xs font-mono uppercase tracking-wider mb-4 opacity-60 flex items-center gap-2 pt-4 border-t border-white/10">
+                  <span className="w-2 h-2 rounded-full bg-neutral-400" />
+                  Original Canvas Dither Matrix Suite (Preserved)
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+                  <InViewRender><DitherDonutChart theme={theme} /></InViewRender>
+                  <InViewRender><ServerGauge theme={theme} /></InViewRender>
+                  <InViewRender><DeviceUsageChart theme={theme} /></InViewRender>
+                  <InViewRender><DitherGrowthChart theme={theme} /></InViewRender>
+                  <InViewRender><TrafficBubble theme={theme} /></InViewRender>
+                  <InViewRender><RevenueLineChart theme={theme} /></InViewRender>
+                  <InViewRender><DitherStackedChart theme={theme} /></InViewRender>
+                  <InViewRender><DitherFunnelChart theme={theme} /></InViewRender>
+                  <InViewRender><StorageUsageChart theme={theme} /></InViewRender>
+                  <InViewRender><UptimeChart theme={theme} /></InViewRender>
+                </div>
               </div>
             )}
           </motion.div>
