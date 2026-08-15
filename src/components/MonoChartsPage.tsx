@@ -8,12 +8,17 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
+import { GitHubActivity } from './mono-charts/GitHubActivity';
 import { MonoRoundedLineChart } from './mono-charts/MonoRoundedLineChart';
 import { MonoRoundedBarChart } from './mono-charts/MonoRoundedBarChart';
 import { MonoRoundedAreaChart } from './mono-charts/MonoRoundedAreaChart';
 import { MonoRoundedDonutChart } from './mono-charts/MonoRoundedDonutChart';
 import { MonoRoundedComposedChart } from './mono-charts/MonoRoundedComposedChart';
 import { MonoRoundedScatterChart } from './mono-charts/MonoRoundedScatterChart';
+import { MonoRoundedCandlestickChart } from './mono-charts/MonoRoundedCandlestickChart';
+import { MonoRoundedKpiCardChart } from './mono-charts/MonoRoundedKpiCardChart';
+import { MonoRoundedPyramidChart } from './mono-charts/MonoRoundedPyramidChart';
+import { MonoRoundedRadialBarGroup } from './mono-charts/MonoRoundedRadialBarGroup';
 import { MonoRoundedStepChart } from './mono-charts/MonoRoundedStepChart';
 import { MonoRoundedStackedBarChart } from './mono-charts/MonoRoundedStackedBarChart';
 import { MonoRoundedRadarChart } from './mono-charts/MonoRoundedRadarChart';
@@ -65,6 +70,14 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
 
   const CARD_ITEMS: MonoCardDef[] = useMemo(() => [
     {
+      id: 'github-activity',
+      title: 'GitHub Activity Heatmap',
+      description: 'GitHub style contribution activity calendar heatmap with month headers, cell tooltips, and top repositories drawer.',
+      cliCommand: 'npx @subhanhq/amicro@latest add github-activity',
+      codeSnippet: `import { GitHubActivity } from '@/components/ui/github-activity';\n\nexport default function Demo() {\n  return <GitHubActivity username="Subhan-code" theme="${theme}" />;\n}`,
+      component: <GitHubActivity theme={theme} defaultOpen={false} />,
+    },
+    {
       id: 'mono-rounded-line',
       title: 'Mono Rounded Spline Line',
       description: 'Minimalist monochromatic line chart with smooth rounded spline curves and rounded stroke caps.',
@@ -111,6 +124,38 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
       cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-scatter',
       codeSnippet: `import { MonoRoundedScatterChart } from '@/components/ui/mono-rounded-scatter';\n\nexport default function Demo() {\n  return <MonoRoundedScatterChart theme="${theme}" />;\n}`,
       component: <MonoRoundedScatterChart theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-candlestick',
+      title: 'Mono Financial Candlesticks',
+      description: 'Monochromatic candlestick financial price bars with rounded wick caps and solid/hollow candles.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-candlestick',
+      codeSnippet: `import { MonoRoundedCandlestickChart } from '@/components/ui/mono-rounded-candlestick';\n\nexport default function Demo() {\n  return <MonoRoundedCandlestickChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedCandlestickChart theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-kpi',
+      title: 'Mono Stat KPI Card',
+      description: 'Minimalist KPI stat metric card featuring an embedded rounded spline sparkline indicator.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-kpi',
+      codeSnippet: `import { MonoRoundedKpiCardChart } from '@/components/ui/mono-rounded-kpi';\n\nexport default function Demo() {\n  return <MonoRoundedKpiCardChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedKpiCardChart theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-pyramid',
+      title: 'Mono Tier Pyramid Stack',
+      description: 'Monochromatic pyramid level bar chart featuring rounded corner tier geometry.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-pyramid',
+      codeSnippet: `import { MonoRoundedPyramidChart } from '@/components/ui/mono-rounded-pyramid';\n\nexport default function Demo() {\n  return <MonoRoundedPyramidChart theme="${theme}" />;\n}`,
+      component: <MonoRoundedPyramidChart theme={theme} />,
+    },
+    {
+      id: 'mono-rounded-radial-group',
+      title: 'Mono Radial Bar Group',
+      description: 'Multi-ring radial progress bar group with rounded arc endcaps and layered utilization metrics.',
+      cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radial-group',
+      codeSnippet: `import { MonoRoundedRadialBarGroup } from '@/components/ui/mono-rounded-radial-group';\n\nexport default function Demo() {\n  return <MonoRoundedRadialBarGroup theme="${theme}" />;\n}`,
+      component: <MonoRoundedRadialBarGroup theme={theme} />,
     },
     {
       id: 'mono-rounded-step',
@@ -235,7 +280,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
           isDark ? 'bg-white/10 text-neutral-200 border border-white/20' : 'bg-neutral-900 text-white border border-neutral-700'
         }`}>
           <Circle className="w-3.5 h-3.5 fill-current" />
-          <span>20 Minimalist Visualizers</span>
+          <span>25 Minimalist Visualizers</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
@@ -243,7 +288,7 @@ export function MonoChartsPage({ theme, showToast, triggerHaptic }: MonoChartsPa
         </h1>
 
         <p className={`text-sm sm:text-base max-w-lg ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-          A collection of 20 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
+          A collection of 25 monochromatic chart visualizers built with rounded corner geometry and minimalist typography.
         </p>
 
         {/* GitHub Repository CTA Link */}

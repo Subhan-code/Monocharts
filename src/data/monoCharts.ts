@@ -10,6 +10,15 @@ export interface MonoChartItem {
 
 export const monoChartsData: MonoChartItem[] = [
   {
+    id: 'github-activity',
+    label: 'GitHub Activity Heatmap',
+    kebabName: 'github-activity',
+    category: 'matrix',
+    description: 'GitHub style contribution activity calendar heatmap with month headers, interactive cell tooltips, and top repositories drawer.',
+    cliCommand: 'npx @subhanhq/amicro@latest add github-activity',
+    codeSnippet: `import { GitHubActivity } from '@/components/ui/github-activity';\n\nexport default function Demo() {\n  return <GitHubActivity username="Subhan-code" theme="dark" />;\n}`
+  },
+  {
     id: 'mono-rounded-line',
     label: 'Mono Rounded Spline Line',
     kebabName: 'mono-rounded-line',
@@ -62,6 +71,42 @@ export const monoChartsData: MonoChartItem[] = [
     description: 'Minimalist monochromatic scatter node matrix with rounded circle nodes and hover trace callouts.',
     cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-scatter',
     codeSnippet: `import { MonoRoundedScatterChart } from '@/components/ui/mono-rounded-scatter';\n\nexport default function Demo() {\n  return <MonoRoundedScatterChart theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-candlestick',
+    label: 'Mono Financial Candlesticks',
+    kebabName: 'mono-rounded-candlestick',
+    category: 'bar',
+    description: 'Monochromatic candlestick financial price bars with rounded wick caps and solid/hollow candles.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-candlestick',
+    codeSnippet: `import { MonoRoundedCandlestickChart } from '@/components/ui/mono-rounded-candlestick';\n\nexport default function Demo() {\n  return <MonoRoundedCandlestickChart theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-kpi',
+    label: 'Mono Stat KPI Card',
+    kebabName: 'mono-rounded-kpi',
+    category: 'line',
+    description: 'Minimalist KPI stat metric card featuring an embedded rounded spline sparkline indicator.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-kpi',
+    codeSnippet: `import { MonoRoundedKpiCardChart } from '@/components/ui/mono-rounded-kpi';\n\nexport default function Demo() {\n  return <MonoRoundedKpiCardChart theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-pyramid',
+    label: 'Mono Tier Pyramid Stack',
+    kebabName: 'mono-rounded-pyramid',
+    category: 'bar',
+    description: 'Monochromatic pyramid level bar chart featuring rounded corner tier geometry.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-pyramid',
+    codeSnippet: `import { MonoRoundedPyramidChart } from '@/components/ui/mono-rounded-pyramid';\n\nexport default function Demo() {\n  return <MonoRoundedPyramidChart theme="dark" />;\n}`
+  },
+  {
+    id: 'mono-rounded-radial-group',
+    label: 'Mono Radial Bar Group',
+    kebabName: 'mono-rounded-radial-group',
+    category: 'radial',
+    description: 'Multi-ring radial progress bar group with rounded arc endcaps and layered utilization metrics.',
+    cliCommand: 'npx @subhanhq/amicro@latest add mono-rounded-radial-group',
+    codeSnippet: `import { MonoRoundedRadialBarGroup } from '@/components/ui/mono-rounded-radial-group';\n\nexport default function Demo() {\n  return <MonoRoundedRadialBarGroup theme="dark" />;\n}`
   },
   {
     id: 'mono-rounded-step',
